@@ -1,0 +1,21 @@
+{
+  "name": "awaitqueue",
+  "version": "0.1.0-alpha",
+  "description": "Enqueue async tasks",
+  "author": "Iñaki Baz Castillo <ibc@aliax.net> (https://inakibaz.me)",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/versatica/awaitqueue.git"
+  },
+  "main": "index.js",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "scripts": {
+    "lint": "eslint -c .eslintrc.js index.js"
+  },
+  "devDependencies": {
+    "eslint": "^5.12.1"
+  }
+}
