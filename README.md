@@ -11,7 +11,7 @@ $ npm install awaitqueue
 
 ## Usage
 
-* CommonJs usage:
+* CommonJS usage:
 
 ```js
 const AwaitQueue = require('awaitqueue');
@@ -48,7 +48,7 @@ Closes the queue. Pending tasks will be rejected with `ClosedErrorClass` error.
 ## Usage example
 
 ```js
-import AwaitQueue from 'awaitqueue';
+const AwaitQueue = require('awaitqueue');
 
 const queue = new AwaitQueue();
 let taskCounter = 0;
@@ -59,29 +59,59 @@ async function task()
   {
     setTimeout(() =>
     {
-      console.log('task %d done!', ++taskCounter);
+      ++taskCounter
 
-      resolve();
+      console.log('task %d done!', taskCounter);
+
+      resolve(taskCounter);
     }, 2000);
   }); 
 }
 
-queue.push(task);
-queue.push(task);
-queue.push(task);
+async function run()
+{
+  let ret;
+
+  console.log('calling queue.push()');
+  ret = await queue.push(task);
+  console.log('>>> ret:', ret);
+
+  console.log('calling queue.push()');
+  ret = await queue.push(task);
+  console.log('>>> ret:', ret);
+  
+  console.log('calling queue.close()');
+  queue.close();
+
+  try
+  {
+    console.log('calling queue.push()');
+    ret = await queue.push(task);
+    console.log('>>> ret:', ret);
+  }
+  catch (error)
+  {
+    console.error('>>> task failed: %s', error.toString());
+  }
+}
+
+run();
 ```
 
 Output:
 
 ```
+calling queue.push()
 // after 2 seconds:
 task 1 done!
-
+>>> ret: 1
+calling queue.push()
 // after 2 seconds:
 task 2 done!
-
-// after 2 seconds:
-task 3 done!
+>>> ret: 2
+calling queue.close()
+calling queue.push()
+>>> task failed: Error: AwaitQueue closed
 ```
 
 
