@@ -16,6 +16,6 @@
     "lint": "eslint -c .eslintrc.js index.js"
   },
   "devDependencies": {
-    "eslint": "^5.12.1"
+    "eslint": "^6.6.0"
   }
 }
