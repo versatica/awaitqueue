@@ -17,11 +17,25 @@ $ npm install awaitqueue
 const AwaitQueue = require('awaitqueue');
 ```
 
-* ES6 usage:
+* ES6 usage (see issue below):
+
+```js
+import { AwaitQueue } from 'awaitqueue';
+```
+
+*ISSUE:* For some reason, in ES6 this does not work:
 
 ```js
 import AwaitQueue from 'awaitqueue';
 ```
+
+It should work given that the main module exports a class as follows `module.exports = AwaitQueue;`. However, when using `browserify` + `babel` or `jest`, it fails with:
+
+```
+awaitqueue_1.default is not a constructor
+```
+
+Issue reported in https://github.com/versatica/awaitqueue/issues/1.
 
 
 ## API
