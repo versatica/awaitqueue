@@ -1,6 +1,6 @@
 {
   "name": "awaitqueue",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "JavaScript utility to enqueue async tasks for Node.js and the browser",
   "author": "Iñaki Baz Castillo <ibc@aliax.net> (https://inakibaz.me)",
   "license": "ISC",
@@ -8,14 +8,19 @@
     "type": "git",
     "url": "https://github.com/versatica/awaitqueue.git"
   },
-  "main": "index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "engines": {
     "node": ">=8.0.0"
   },
   "scripts": {
-    "lint": "eslint -c .eslintrc.js index.js"
+    "build": "rm -rf lib/ && tsc",
+    "lint": "eslint -c .eslintrc.js --ext=js,ts --ignore-pattern '!.eslintrc.js' .eslintrc.js src/"
   },
   "devDependencies": {
-    "eslint": "^6.6.0"
+    "@typescript-eslint/eslint-plugin": "^2.10.0",
+    "@typescript-eslint/parser": "^2.10.0",
+    "eslint": "^6.7.2",
+    "typescript": "^3.6.4"
   }
 }
