@@ -26,11 +26,12 @@ import { AwaitQueue } from 'awaitqueue';
 
 ## API
 
-### new AwaitQueue({ ClosedErrorClass = Error })
+### new AwaitQueue({ ClosedErrorClass = Error, StoppedErrorClass = Error })
 
 Creates an `AwaitQueue` instance.
 
 * `@param {Error} ClosedErrorClass`: Custom `Error` derived class that will be used to reject pending tasks after `close()` method has been called. If not set, `Error` class is used.
+* `@param {Error} StoppedErrorClass`: Custom `Error` derived class that will be used to reject pending tasks after `stop()` method has been called. If not set, `Error` class is used.
 
 
 ### async awaitQueue.push(task)
@@ -42,7 +43,12 @@ Accepts a task as argument and enqueues it after pending tasks. Once processed, 
 
 ### awaitQueue.close()
 
-Closes the queue. Pending tasks will be rejected with `ClosedErrorClass` error.
+Closes the queue. Pending tasks will be rejected with the given  `ClosedErrorClass` error. The `AwaitQueue` instance is no longer usable (this method is terminal).
+
+
+### awaitQueue.stop()
+
+Make ongoing pending tasks reject with the given  `StoppedErrorClass` error. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
 
 
 ## Usage example
@@ -50,48 +56,64 @@ Closes the queue. Pending tasks will be rejected with `ClosedErrorClass` error.
 ```js
 const { AwaitQueue } = require('awaitqueue');
 
-const queue = new AwaitQueue();
-let taskCounter = 0;
-
-async function task()
+function taskFactory(id)
 {
-  return new Promise((resolve) =>
+  console.log('creating task %d', id);
+
+  // Return a function that returns a Promise (a task).
+  return function()
   {
-    setTimeout(() =>
+    return new Promise((resolve) =>
     {
-      ++taskCounter
-
-      console.log('task %d done!', taskCounter);
-
-      resolve(taskCounter);
-    }, 2000);
-  }); 
+      console.log('running task %d', id);
+      setTimeout(() => resolve(id), 2000);
+    });
+  };
 }
 
 async function run()
 {
-  let ret;
+  const queue = new AwaitQueue();
+  let result;
 
-  console.log('calling queue.push()');
-  ret = await queue.push(task);
-  console.log('>>> ret:', ret);
+  console.log('1. calling queue.push()');
+  result = await queue.push(taskFactory('1'));
+  console.log('1. task result:', result);
 
-  console.log('calling queue.push()');
-  ret = await queue.push(task);
-  console.log('>>> ret:', ret);
-  
+  console.log('2. calling queue.push()');
+  result = await queue.push(taskFactory('2'));
+  console.log('2. task result:', result);
+
+  console.log('3. calling queue.push()');
+  await new Promise((resolve) =>
+  {
+    queue.push(taskFactory('3'))
+      .then(() =>
+      {
+        console.warn('3. task should not succeed (it was stopped)');
+        resolve();
+      })
+      .catch((error) =>
+      {
+        console.log('3. task failed as expected because it was stopped (%s)', error.toString());
+        resolve();
+      });
+
+    console.log('3. calling queue.stop()');
+    queue.stop();
+  });
+
   console.log('calling queue.close()');
   queue.close();
 
   try
   {
-    console.log('calling queue.push()');
-    ret = await queue.push(task);
-    console.log('>>> ret:', ret);
+    console.log('4. calling queue.push()');
+    await queue.push(taskFactory('4'));
   }
   catch (error)
   {
-    console.error('>>> task failed: %s', error.toString());
+    console.error('4. task failed as expected because it was closed (%s)', error.toString());
   }
 }
 
@@ -101,21 +123,27 @@ run();
 Output:
 
 ```
-calling queue.push()
+1. calling queue.push()
+creating task 1
+running task 1
+1. task result: 1
 
-// after 2 seconds:
+2. calling queue.push()
+creating task 2
+running task 2
+2. task result: 2
 
-task 1 done!
->>> ret: 1
-calling queue.push()
+3. calling queue.push()
+creating task 3
+running task 3
+3. calling queue.stop()
+3. task failed as expected because it was stopped (Error: AwaitQueue stopped)
 
-// after 2 seconds:
-
-task 2 done!
->>> ret: 2
 calling queue.close()
-calling queue.push()
->>> task failed: Error: AwaitQueue closed
+
+4. calling queue.push()
+creating task 4
+4. task failed as expected because it was closed (Error: AwaitQueue closed)
 ```
 
 

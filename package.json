@@ -1,6 +1,6 @@
 {
   "name": "awaitqueue",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "JavaScript utility to enqueue async tasks for Node.js and the browser",
   "author": "Iñaki Baz Castillo <ibc@aliax.net> (https://inakibaz.me)",
   "license": "ISC",
@@ -15,7 +15,8 @@
   },
   "scripts": {
     "build": "rm -rf lib/ && tsc",
-    "lint": "eslint -c .eslintrc.js --ext=js,ts --ignore-pattern '!.eslintrc.js' .eslintrc.js src/"
+    "lint": "eslint -c .eslintrc.js --ext=js,ts --ignore-pattern '!.eslintrc.js' .eslintrc.js src/",
+    "ts-errors": "(rm -rf build/) && (tsc --watch --pretty)"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^2.17.0",

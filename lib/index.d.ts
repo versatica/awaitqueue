@@ -4,12 +4,18 @@ export interface AwaitQueueOptions {
      * close() method has been called. If not set, Error class is used.
      */
     ClosedErrorClass?: any;
+    /**
+     * Custom Error derived class that will be used to reject pending tasks after
+     * stop() method has been called. If not set, Error class is used.
+     */
+    StoppedErrorClass?: any;
 }
 declare class AwaitQueue {
     private _closed;
     private readonly _pendingTasks;
     private readonly _ClosedErrorClass;
-    constructor({ ClosedErrorClass }?: AwaitQueueOptions);
+    private readonly _StoppedErrorClass;
+    constructor({ ClosedErrorClass, StoppedErrorClass }?: AwaitQueueOptions);
     /**
      * Closes the AwaitQueue. Pending tasks will be rejected with ClosedErrorClass
      * error.
@@ -23,6 +29,7 @@ declare class AwaitQueue {
      * The given task must return a Promise or directly a value.
      */
     push(task: Function): Promise<any>;
+    stop(): void;
     private _next;
     private _executeTask;
 }

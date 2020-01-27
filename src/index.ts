@@ -5,6 +5,11 @@ export interface AwaitQueueOptions
 	 * close() method has been called. If not set, Error class is used.
 	 */
 	ClosedErrorClass?: any;
+	/**
+	 * Custom Error derived class that will be used to reject pending tasks after
+	 * stop() method has been called. If not set, Error class is used.
+	 */
+	StoppedErrorClass?: any;
 }
 
 interface PendingTask
@@ -12,6 +17,7 @@ interface PendingTask
 	execute: Function;
 	resolve: Function;
 	reject: Function;
+	stopped: boolean;
 }
 
 class AwaitQueue
@@ -25,12 +31,22 @@ class AwaitQueue
 	// Error class used when rejecting a task due to AwaitQueue being closed.
 	private readonly _ClosedErrorClass = Error;
 
+	// Error class used when rejecting a task due to AwaitQueue being stopped.
+	private readonly _StoppedErrorClass = Error;
+
 	constructor(
-		{ ClosedErrorClass }: AwaitQueueOptions =
-		{ ClosedErrorClass: Error }
+		{
+			ClosedErrorClass,
+			StoppedErrorClass
+		}: AwaitQueueOptions =
+		{
+			ClosedErrorClass  : Error,
+			StoppedErrorClass : Error
+		}
 	)
 	{
 		this._ClosedErrorClass = ClosedErrorClass;
+		this._StoppedErrorClass = StoppedErrorClass;
 	}
 
 	/**
@@ -60,7 +76,8 @@ class AwaitQueue
 			{
 				execute : task,
 				resolve,
-				reject
+				reject,
+				stopped : false
 			};
 
 			// Append task to the queue.
@@ -70,6 +87,15 @@ class AwaitQueue
 			if (this._pendingTasks.length === 1)
 				this._next();
 		});
+	}
+
+	stop(): void
+	{
+		for (const pendingTask of this._pendingTasks)
+		{
+			pendingTask.stopped = true;
+			pendingTask.reject(new this._StoppedErrorClass('AwaitQueue stopped'));
+		}
 	}
 
 	private async _next(): Promise<any>
@@ -99,6 +125,10 @@ class AwaitQueue
 			return;
 		}
 
+		// If stop() was called for this task, ignore it.
+		if (pendingTask.stopped)
+			return;
+
 		try
 		{
 			const result = await pendingTask.execute();
@@ -109,6 +139,10 @@ class AwaitQueue
 
 				return;
 			}
+
+			// If stop() was called for this task, ignore it.
+			if (pendingTask.stopped)
+				return;
 
 			// Resolve the task with the returned result (if any).
 			pendingTask.resolve(result);
@@ -121,6 +155,10 @@ class AwaitQueue
 
 				return;
 			}
+
+			// If stop() was called for this task, ignore it.
+			if (pendingTask.stopped)
+				return;
 
 			// Reject the task with its own error.
 			pendingTask.reject(error);
