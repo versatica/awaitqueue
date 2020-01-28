@@ -96,6 +96,9 @@ class AwaitQueue
 			pendingTask.stopped = true;
 			pendingTask.reject(new this._StoppedErrorClass('AwaitQueue stopped'));
 		}
+
+		// Enpty the pending tasks array.
+		this._pendingTasks.length = 0;
 	}
 
 	private async _next(): Promise<any>
