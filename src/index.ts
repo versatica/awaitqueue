@@ -1,4 +1,4 @@
-export interface AwaitQueueOptions
+export type AwaitQueueOptions =
 {
 	/**
 	 * Custom Error derived class that will be used to reject pending tasks after
@@ -10,29 +10,32 @@ export interface AwaitQueueOptions
 	 * stop() method has been called. If not set, Error class is used.
 	 */
 	StoppedErrorClass?: any;
-}
+};
 
-interface PendingTask
+export type AwaitQueueTask = (...args: any[]) => any;
+
+type PendingTask =
 {
-	execute: Function;
-	resolve: Function;
-	reject: Function;
+	task: AwaitQueueTask;
+	name?: string;
+	resolve: (...args: any[]) => any;
+	reject: (error: Error) => void;
 	stopped: boolean;
 }
 
-class AwaitQueue
+export class AwaitQueue
 {
 	// Closed flag.
-	private _closed = false;
+	private closed = false;
 
 	// Queue of pending tasks.
-	private readonly _pendingTasks: Array<PendingTask> = [];
+	private readonly pendingTasks: Array<PendingTask> = [];
 
 	// Error class used when rejecting a task due to AwaitQueue being closed.
-	private readonly _ClosedErrorClass = Error;
+	private readonly ClosedErrorClass = Error;
 
 	// Error class used when rejecting a task due to AwaitQueue being stopped.
-	private readonly _StoppedErrorClass = Error;
+	private readonly StoppedErrorClass = Error;
 
 	constructor(
 		{
@@ -45,8 +48,8 @@ class AwaitQueue
 		}
 	)
 	{
-		this._ClosedErrorClass = ClosedErrorClass;
-		this._StoppedErrorClass = StoppedErrorClass;
+		this.ClosedErrorClass = ClosedErrorClass;
+		this.StoppedErrorClass = StoppedErrorClass;
 	}
 
 	/**
@@ -55,17 +58,17 @@ class AwaitQueue
 	 */
 	close(): void
 	{
-		this._closed = true;
+		this.closed = true;
 	}
 
 	/**
-	 * Accepts a task as argument and enqueues it after pending tasks. Once
-	 * processed, the push() method resolves (or rejects) with the result
-	 * returned by the given task.
+	 * Accepts a task as argument (and an optional task name) and enqueues it after
+	 * pending tasks. Once processed, the push() method resolves (or rejects) with
+	 * the result returned by the given task.
 	 *
 	 * The given task must return a Promise or directly a value.
 	 */
-	async push(task: Function): Promise<any>
+	async push(task: AwaitQueueTask, name?: string): Promise<any>
 	{
 		if (typeof task !== 'function')
 			throw new TypeError('given task is not a function');
@@ -74,56 +77,69 @@ class AwaitQueue
 		{
 			const pendingTask: PendingTask =
 			{
-				execute : task,
+				task,
+				name,
 				resolve,
 				reject,
 				stopped : false
 			};
 
 			// Append task to the queue.
-			this._pendingTasks.push(pendingTask);
+			this.pendingTasks.push(pendingTask);
 
 			// And run it if this is the only task in the queue.
-			if (this._pendingTasks.length === 1)
-				this._next();
+			if (this.pendingTasks.length === 1)
+				this.next();
 		});
 	}
 
 	stop(): void
 	{
-		for (const pendingTask of this._pendingTasks)
+		for (const pendingTask of this.pendingTasks)
 		{
 			pendingTask.stopped = true;
-			pendingTask.reject(new this._StoppedErrorClass('AwaitQueue stopped'));
+			pendingTask.reject(new this.StoppedErrorClass('AwaitQueue stopped'));
 		}
 
 		// Enpty the pending tasks array.
-		this._pendingTasks.length = 0;
+		this.pendingTasks.length = 0;
 	}
 
-	private async _next(): Promise<any>
+	dump(): { task: AwaitQueueTask;	name?: string; stopped: boolean }[]
+	{
+		return this.pendingTasks.map((pendingTask) =>
+		{
+			return {
+				task    : pendingTask.task,
+				name    : pendingTask.name,
+				stopped : pendingTask.stopped
+			};
+		});
+	}
+
+	private async next(): Promise<any>
 	{
 		// Take the first pending task.
-		const pendingTask = this._pendingTasks[0];
+		const pendingTask = this.pendingTasks[0];
 
 		if (!pendingTask)
 			return;
 
 		// Execute it.
-		await this._executeTask(pendingTask);
+		await this.executeTask(pendingTask);
 
 		// Remove the first pending task (the completed one) from the queue.
-		this._pendingTasks.shift();
+		this.pendingTasks.shift();
 
 		// And continue.
-		this._next();
+		this.next();
 	}
 
-	private async _executeTask(pendingTask: PendingTask): Promise<any>
+	private async executeTask(pendingTask: PendingTask): Promise<any>
 	{
-		if (this._closed)
+		if (this.closed)
 		{
-			pendingTask.reject(new this._ClosedErrorClass('AwaitQueue closed'));
+			pendingTask.reject(new this.ClosedErrorClass('AwaitQueue closed'));
 
 			return;
 		}
@@ -134,11 +150,11 @@ class AwaitQueue
 
 		try
 		{
-			const result = await pendingTask.execute();
+			const result = await pendingTask.task();
 
-			if (this._closed)
+			if (this.closed)
 			{
-				pendingTask.reject(new this._ClosedErrorClass('AwaitQueue closed'));
+				pendingTask.reject(new this.ClosedErrorClass('AwaitQueue closed'));
 
 				return;
 			}
@@ -152,9 +168,9 @@ class AwaitQueue
 		}
 		catch (error)
 		{
-			if (this._closed)
+			if (this.closed)
 			{
-				pendingTask.reject(new this._ClosedErrorClass('AwaitQueue closed'));
+				pendingTask.reject(new this.ClosedErrorClass('AwaitQueue closed'));
 
 				return;
 			}
@@ -168,5 +184,3 @@ class AwaitQueue
 		}
 	}
 }
-
-export { AwaitQueue };
