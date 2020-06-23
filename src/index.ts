@@ -73,6 +73,16 @@ export class AwaitQueue
 		if (typeof task !== 'function')
 			throw new TypeError('given task is not a function');
 
+		if (!task.name && name)
+		{
+			try
+			{
+				Object.defineProperty(task, 'name', { value: name });
+			}
+			catch (error)
+			{}
+		}
+
 		return new Promise((resolve, reject) =>
 		{
 			const pendingTask: PendingTask =
