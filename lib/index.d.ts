@@ -18,6 +18,10 @@ export declare class AwaitQueue {
     private readonly StoppedErrorClass;
     constructor({ ClosedErrorClass, StoppedErrorClass }?: AwaitQueueOptions);
     /**
+     * The number of ongoing enqueued tasks.
+     */
+    get size(): number;
+    /**
      * Closes the AwaitQueue. Pending tasks will be rejected with ClosedErrorClass
      * error.
      */
@@ -30,6 +34,11 @@ export declare class AwaitQueue {
      * The given task must return a Promise or directly a value.
      */
     push(task: AwaitQueueTask, name?: string): Promise<any>;
+    /**
+     * Make ongoing pending tasks reject with the given StoppedErrorClass error.
+     * The AwaitQueue instance is still usable for future tasks added via push()
+     * method.
+     */
     stop(): void;
     dump(): {
         task: AwaitQueueTask;

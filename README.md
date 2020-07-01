@@ -41,6 +41,11 @@ Accepts a task as argument and enqueues it after pending tasks. Once processed, 
 * `@param {Function} task`: Function that must return a `Promise` or a directly a value.
 
 
+### awaitQueue.size
+
+The number of ongoing enqueued tasks.
+
+
 ### awaitQueue.close()
 
 Closes the queue. Pending tasks will be rejected with the given  `ClosedErrorClass` error. The `AwaitQueue` instance is no longer usable (this method is terminal).
@@ -48,7 +53,7 @@ Closes the queue. Pending tasks will be rejected with the given  `ClosedErrorCla
 
 ### awaitQueue.stop()
 
-Make ongoing pending tasks reject with the given  `StoppedErrorClass` error. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
+Make ongoing pending tasks reject with the given `StoppedErrorClass` error. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
 
 
 ## Usage example

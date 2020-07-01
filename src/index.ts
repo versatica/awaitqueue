@@ -53,6 +53,14 @@ export class AwaitQueue
 	}
 
 	/**
+	 * The number of ongoing enqueued tasks.
+	 */
+	get size(): number
+	{
+		return this.pendingTasks.length;
+	}
+
+	/**
 	 * Closes the AwaitQueue. Pending tasks will be rejected with ClosedErrorClass
 	 * error.
 	 */
@@ -103,6 +111,11 @@ export class AwaitQueue
 		});
 	}
 
+	/**
+	 * Make ongoing pending tasks reject with the given StoppedErrorClass error.
+	 * The AwaitQueue instance is still usable for future tasks added via push()
+	 * method.
+	 */
 	stop(): void
 	{
 		for (const pendingTask of this.pendingTasks)
