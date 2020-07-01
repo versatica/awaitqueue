@@ -66,7 +66,19 @@ export class AwaitQueue
 	 */
 	close(): void
 	{
+		if (this.closed)
+			return;
+
 		this.closed = true;
+
+		for (const pendingTask of this.pendingTasks)
+		{
+			pendingTask.stopped = true;
+			pendingTask.reject(new this.ClosedErrorClass('AwaitQueue closed'));
+		}
+
+		// Enpty the pending tasks array.
+		this.pendingTasks.length = 0;
 	}
 
 	/**
@@ -78,6 +90,9 @@ export class AwaitQueue
 	 */
 	async push(task: AwaitQueueTask, name?: string): Promise<any>
 	{
+		if (this.closed)
+			throw new this.ClosedErrorClass('AwaitQueue closed');
+
 		if (typeof task !== 'function')
 			throw new TypeError('given task is not a function');
 
@@ -118,6 +133,9 @@ export class AwaitQueue
 	 */
 	stop(): void
 	{
+		if (this.closed)
+			return;
+
 		for (const pendingTask of this.pendingTasks)
 		{
 			pendingTask.stopped = true;
@@ -160,14 +178,7 @@ export class AwaitQueue
 
 	private async executeTask(pendingTask: PendingTask): Promise<any>
 	{
-		if (this.closed)
-		{
-			pendingTask.reject(new this.ClosedErrorClass('AwaitQueue closed'));
-
-			return;
-		}
-
-		// If stop() was called for this task, ignore it.
+		// If the task is stopped, ignore it.
 		if (pendingTask.stopped)
 			return;
 
@@ -175,14 +186,7 @@ export class AwaitQueue
 		{
 			const result = await pendingTask.task();
 
-			if (this.closed)
-			{
-				pendingTask.reject(new this.ClosedErrorClass('AwaitQueue closed'));
-
-				return;
-			}
-
-			// If stop() was called for this task, ignore it.
+			// If the task is stopped, ignore it.
 			if (pendingTask.stopped)
 				return;
 
@@ -191,14 +195,7 @@ export class AwaitQueue
 		}
 		catch (error)
 		{
-			if (this.closed)
-			{
-				pendingTask.reject(new this.ClosedErrorClass('AwaitQueue closed'));
-
-				return;
-			}
-
-			// If stop() was called for this task, ignore it.
+			// If the task is stopped, ignore it.
 			if (pendingTask.stopped)
 				return;
 
