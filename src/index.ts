@@ -146,7 +146,7 @@ export class AwaitQueue
 		this.pendingTasks.length = 0;
 	}
 
-	dump(): { task: AwaitQueueTask<unknown>;	name?: string; stopped: boolean }[]
+	dump(): { task: AwaitQueueTask<unknown>; name?: string; stopped: boolean }[]
 	{
 		return this.pendingTasks.map((pendingTask) =>
 		{
