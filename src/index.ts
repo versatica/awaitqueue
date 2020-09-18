@@ -12,11 +12,11 @@ export type AwaitQueueOptions =
 	StoppedErrorClass?: any;
 };
 
-export type AwaitQueueTask = (...args: any[]) => any;
+export type AwaitQueueTask<T> = () => Promise<T>;
 
 type PendingTask =
 {
-	task: AwaitQueueTask;
+	task: AwaitQueueTask<unknown>;
 	name?: string;
 	resolve: (...args: any[]) => any;
 	reject: (error: Error) => void;
@@ -88,7 +88,7 @@ export class AwaitQueue
 	 *
 	 * The given task must return a Promise or directly a value.
 	 */
-	async push(task: AwaitQueueTask, name?: string): Promise<any>
+	async push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T>
 	{
 		if (this.closed)
 			throw new this.ClosedErrorClass('AwaitQueue closed');
@@ -146,7 +146,7 @@ export class AwaitQueue
 		this.pendingTasks.length = 0;
 	}
 
-	dump(): { task: AwaitQueueTask;	name?: string; stopped: boolean }[]
+	dump(): { task: AwaitQueueTask<unknown>; name?: string; stopped: boolean }[]
 	{
 		return this.pendingTasks.map((pendingTask) =>
 		{

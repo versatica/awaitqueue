@@ -10,7 +10,7 @@ export declare type AwaitQueueOptions = {
      */
     StoppedErrorClass?: any;
 };
-export declare type AwaitQueueTask = (...args: any[]) => any;
+export declare type AwaitQueueTask<T> = () => Promise<T>;
 export declare class AwaitQueue {
     private closed;
     private readonly pendingTasks;
@@ -33,7 +33,7 @@ export declare class AwaitQueue {
      *
      * The given task must return a Promise or directly a value.
      */
-    push(task: AwaitQueueTask, name?: string): Promise<any>;
+    push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T>;
     /**
      * Make ongoing pending tasks reject with the given StoppedErrorClass error.
      * The AwaitQueue instance is still usable for future tasks added via push()
@@ -41,7 +41,7 @@ export declare class AwaitQueue {
      */
     stop(): void;
     dump(): {
-        task: AwaitQueueTask;
+        task: AwaitQueueTask<unknown>;
         name?: string;
         stopped: boolean;
     }[];
