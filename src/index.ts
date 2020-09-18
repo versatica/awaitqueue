@@ -12,7 +12,7 @@ export type AwaitQueueOptions =
 	StoppedErrorClass?: any;
 };
 
-export type AwaitQueueTask<T> = (...args: any[]) => Promise<T>;
+export type AwaitQueueTask<T> = () => Promise<T>;
 
 type PendingTask =
 {
