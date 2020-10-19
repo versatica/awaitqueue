@@ -10,7 +10,7 @@ export declare type AwaitQueueOptions = {
      */
     StoppedErrorClass?: any;
 };
-export declare type AwaitQueueTask<T> = () => Promise<T>;
+export declare type AwaitQueueTask<T> = () => (Promise<T> | T);
 export declare class AwaitQueue {
     private closed;
     private readonly pendingTasks;
