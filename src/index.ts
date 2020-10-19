@@ -39,8 +39,8 @@ export class AwaitQueue
 
 	constructor(
 		{
-			ClosedErrorClass,
-			StoppedErrorClass
+			ClosedErrorClass = Error,
+			StoppedErrorClass = Error
 		}: AwaitQueueOptions =
 		{
 			ClosedErrorClass  : Error,
