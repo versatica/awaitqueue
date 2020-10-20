@@ -14,46 +14,51 @@ $ npm install awaitqueue
 * CommonJS usage:
 
 ```js
-const { AwaitQueue } = require('awaitqueue');
+const { AwaitQueue, AwaitQueueTask } = require('awaitqueue');
 ```
 
 * ES6 usage:
 
 ```js
-import { AwaitQueue } from 'awaitqueue';
+import { AwaitQueue, AwaitQueueTask } from 'awaitqueue';
 ```
 
 
 ## API
 
-### new AwaitQueue({ ClosedErrorClass = Error, StoppedErrorClass = Error })
+### type AwaitQueueTask<T> = () => (Promise<T> | T)
+
+TypeScript type representing a function that returns a value `T` or a Promise that resolves with `T`.
+
+### new AwaitQueue({ ClosedErrorClass? = Error, StoppedErrorClass? = Error })
 
 Creates an `AwaitQueue` instance.
 
 * `@param {Error} ClosedErrorClass`: Custom `Error` derived class that will be used to reject pending tasks after `close()` method has been called. If not set, `Error` class is used.
 * `@param {Error} StoppedErrorClass`: Custom `Error` derived class that will be used to reject pending tasks after `stop()` method has been called. If not set, `Error` class is used.
 
-
-### async awaitQueue.push(task)
+### async awaitQueue.push(task: AwaitQueueTask<T>, name?: string): Promise<T>
 
 Accepts a task as argument and enqueues it after pending tasks. Once processed, the `push()` method resolves (or rejects) with the result returned by the given task.
 
-* `@param {Function} task`: Function that must return a `Promise` or a directly a value.
+* `@param task`: Function that must return a `Promise` or a directly a value.
+* `@param name`: Optional task name (useful for `dump()` method).
 
-
-### awaitQueue.size
+### awaitQueue.size: number
 
 The number of ongoing enqueued tasks.
 
-
-### awaitQueue.close()
+### awaitQueue.close(): void
 
 Closes the queue. Pending tasks will be rejected with the given  `ClosedErrorClass` error. The `AwaitQueue` instance is no longer usable (this method is terminal).
 
-
-### awaitQueue.stop()
+### awaitQueue.stop(): void
 
 Make ongoing pending tasks reject with the given `StoppedErrorClass` error. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
+
+### awaitQueue.dump(): Array<{ task: AwaitQueueTask, name?: string, stopped: boolean }>
+
+Returns an array with information about pending tasks in the queue.
 
 
 ## Usage example
