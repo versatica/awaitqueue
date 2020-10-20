@@ -11,6 +11,12 @@ export declare type AwaitQueueOptions = {
     StoppedErrorClass?: any;
 };
 export declare type AwaitQueueTask<T> = () => (Promise<T> | T);
+export declare type AwaitQueueDumpItem = {
+    task: AwaitQueueTask<unknown>;
+    name?: string;
+    enqueuedTime: number;
+    executingTime: number;
+};
 export declare class AwaitQueue {
     private closed;
     private readonly pendingTasks;
@@ -40,11 +46,7 @@ export declare class AwaitQueue {
      * method.
      */
     stop(): void;
-    dump(): {
-        task: AwaitQueueTask<unknown>;
-        name?: string;
-        stopped: boolean;
-    }[];
+    dump(): AwaitQueueDumpItem[];
     private next;
     private executeTask;
 }

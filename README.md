@@ -14,19 +14,42 @@ $ npm install awaitqueue
 * CommonJS usage:
 
 ```js
-const { AwaitQueue, AwaitQueueTask } = require('awaitqueue');
+const { AwaitQueue, AwaitQueueTask, AwaitQueueDumpItem } = require('awaitqueue');
 ```
 
 * ES6 usage:
 
 ```js
-import { AwaitQueue, AwaitQueueTask } from 'awaitqueue';
+import { AwaitQueue, AwaitQueueTask, AwaitQueueDumpItem } from 'awaitqueue';
 ```
 
 
 ## API
 
-### type AwaitQueueTask<T> = () => (Promise<T> | T)
+### type AwaitQueueDumpItem
+
+```typescript
+type AwaitQueueDumpItem =
+{
+  task: AwaitQueueTask<unknown>;
+  name?: string;
+  enqueuedTime: number;
+  executingTime: number;
+};
+```
+
+TypeScript type representing an item in the array returned by the `awaitQueue.dump()` method.
+
+* `task`: The function to be executed.
+* `name`: The name of the given `function` (if any) or the `name` argument given to `awaitQueue.push()` method (if any).
+* `enqueuedTime`: Time in milliseconds since the task was enqueued, this is, since `awaitQueue.push()` was called until its execution started or until now if not yet started.
+* `executingTime`: Time in milliseconds since the task execution started (or 0 if not yet started).
+
+### type AwaitQueueTask
+
+```typescript
+type AwaitQueueTask<T> = () => (Promise<T> | T)
+```
 
 TypeScript type representing a function that returns a value `T` or a Promise that resolves with `T`.
 
@@ -42,7 +65,7 @@ Creates an `AwaitQueue` instance.
 Accepts a task as argument and enqueues it after pending tasks. Once processed, the `push()` method resolves (or rejects) with the result returned by the given task.
 
 * `@param task`: Function that must return a `Promise` or a directly a value.
-* `@param name`: Optional task name (useful for `dump()` method).
+* `@param name`: Optional task name (useful for `awaitQueue.dump()` method).
 
 ### awaitQueue.size: number
 
@@ -56,9 +79,9 @@ Closes the queue. Pending tasks will be rejected with the given  `ClosedErrorCla
 
 Make ongoing pending tasks reject with the given `StoppedErrorClass` error. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
 
-### awaitQueue.dump(): Array<{ task: AwaitQueueTask, name?: string, stopped: boolean }>
+### awaitQueue.dump(): AwaitQueueDumpItem[]
 
-Returns an array with information about pending tasks in the queue.
+Returns an array with information about pending tasks in the queue. See the `AwaitQueueDumpItem` type above.
 
 
 ## Usage example

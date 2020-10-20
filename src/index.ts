@@ -14,12 +14,22 @@ export type AwaitQueueOptions =
 
 export type AwaitQueueTask<T> = () => (Promise<T> | T);
 
+export type AwaitQueueDumpItem =
+{
+	task: AwaitQueueTask<unknown>;
+	name?: string;
+	enqueuedTime: number;
+	executingTime: number;
+};
+
 type PendingTask =
 {
 	task: AwaitQueueTask<unknown>;
 	name?: string;
 	resolve: (...args: any[]) => any;
 	reject: (error: Error) => void;
+	enqueuedAt: Date;
+	executedAt?: Date;
 	stopped: boolean;
 }
 
@@ -114,7 +124,9 @@ export class AwaitQueue
 				name,
 				resolve,
 				reject,
-				stopped : false
+				stopped    : false,
+				enqueuedAt : new Date(),
+				executedAt : undefined
 			};
 
 			// Append task to the queue.
@@ -146,14 +158,21 @@ export class AwaitQueue
 		this.pendingTasks.length = 0;
 	}
 
-	dump(): { task: AwaitQueueTask<unknown>; name?: string; stopped: boolean }[]
+	dump(): AwaitQueueDumpItem[]
 	{
+		const now = new Date();
+
 		return this.pendingTasks.map((pendingTask) =>
 		{
 			return {
-				task    : pendingTask.task,
-				name    : pendingTask.name,
-				stopped : pendingTask.stopped
+				task         : pendingTask.task,
+				name         : pendingTask.name,
+				enqueuedTime : pendingTask.executedAt
+					? pendingTask.executedAt.getTime() - pendingTask.enqueuedAt.getTime()
+					: now.getTime() - pendingTask.enqueuedAt.getTime(),
+				executingTime : pendingTask.executedAt
+					? now.getTime() - pendingTask.executedAt.getTime()
+					: 0
 			};
 		});
 	}
@@ -181,6 +200,8 @@ export class AwaitQueue
 		// If the task is stopped, ignore it.
 		if (pendingTask.stopped)
 			return;
+
+		pendingTask.executedAt = new Date();
 
 		try
 		{
