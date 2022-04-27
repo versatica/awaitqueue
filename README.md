@@ -31,6 +31,7 @@ import { AwaitQueue, AwaitQueueTask, AwaitQueueDumpItem } from 'awaitqueue';
 ```typescript
 type AwaitQueueDumpItem =
 {
+  idx: number;
   task: AwaitQueueTask<unknown>;
   name?: string;
   enqueuedTime: number;
@@ -40,6 +41,7 @@ type AwaitQueueDumpItem =
 
 TypeScript type representing an item in the array returned by the `awaitQueue.dump()` method.
 
+* `idx`: Index of the task (0 means the task being processed).
 * `task`: The function to be executed.
 * `name`: The name of the given `function` (if any) or the `name` argument given to `awaitQueue.push()` method (if any).
 * `enqueuedTime`: Time in milliseconds since the task was enqueued, this is, since `awaitQueue.push()` was called until its execution started or until now if not yet started.
@@ -53,12 +55,13 @@ type AwaitQueueTask<T> = () => (Promise<T> | T)
 
 TypeScript type representing a function that returns a value `T` or a Promise that resolves with `T`.
 
-### new AwaitQueue({ ClosedErrorClass? = Error, StoppedErrorClass? = Error })
+### new AwaitQueue({ ClosedErrorClass? = Error, StoppedErrorClass? = Error, RemovedTaskErrorClass? = Error })
 
 Creates an `AwaitQueue` instance.
 
 * `@param {Error} ClosedErrorClass`: Custom `Error` derived class that will be used to reject pending tasks after `close()` method has been called. If not set, `Error` class is used.
 * `@param {Error} StoppedErrorClass`: Custom `Error` derived class that will be used to reject pending tasks after `stop()` method has been called. If not set, `Error` class is used.
+* `@param {Error} RemovedTaskErrorClass`: Custom `Error` derived class that will be used to reject pending tasks after `removeTask()` method has been called. If not set, `Error` class is used.
 
 ### async awaitQueue.push(task: AwaitQueueTask<T>, name?: string): Promise<T>
 
@@ -67,22 +70,27 @@ Accepts a task as argument and enqueues it after pending tasks. Once processed, 
 * `@param task`: Function that must return a `Promise` or a directly a value.
 * `@param name`: Optional task name (useful for `awaitQueue.dump()` method).
 
+### awaitQueue.removeTask(idx: number): void
+
+Removes the pending task with given index. The task is rejected with an instance of `RemovedTaskErrorClass`.
+
+Pending task with index 0 cannot be removed.
+
 ### awaitQueue.size: number
 
 The number of ongoing enqueued tasks.
 
 ### awaitQueue.close(): void
 
-Closes the queue. Pending tasks will be rejected with the given  `ClosedErrorClass` error. The `AwaitQueue` instance is no longer usable (this method is terminal).
+Closes the queue. Pending tasks will be rejected with an instance of `ClosedErrorClass`. The `AwaitQueue` instance is no longer usable (this method is terminal).
 
 ### awaitQueue.stop(): void
 
-Make ongoing pending tasks reject with the given `StoppedErrorClass` error. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
+Make ongoing pending tasks reject with an instance of `StoppedErrorClass`. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
 
 ### awaitQueue.dump(): AwaitQueueDumpItem[]
 
 Returns an array with information about pending tasks in the queue. See the `AwaitQueueDumpItem` type above.
-
 
 ## Usage example
 

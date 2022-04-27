@@ -10,12 +10,18 @@ export type AwaitQueueOptions =
 	 * stop() method has been called. If not set, Error class is used.
 	 */
 	StoppedErrorClass?: any;
+	/**
+	 * Custom Error derived class that will be used to reject removed tasks after
+	 * removeTask() method has been called. If not set, Error class is used.
+	 */
+	RemovedTaskErrorClass?: any;
 };
 
 export type AwaitQueueTask<T> = () => (Promise<T> | T);
 
 export type AwaitQueueDumpItem =
 {
+	idx: number;
 	task: AwaitQueueTask<unknown>;
 	name?: string;
 	enqueuedTime: number;
@@ -47,33 +53,32 @@ export class AwaitQueue
 	// Error class used when rejecting a task due to AwaitQueue being stopped.
 	private readonly StoppedErrorClass = Error;
 
+	// Error class used when removing a pending task when calling removeTask().
+	private readonly RemovedTaskErrorClass = Error;
+
 	constructor(
 		{
 			ClosedErrorClass = Error,
-			StoppedErrorClass = Error
+			StoppedErrorClass = Error,
+			RemovedTaskErrorClass = Error
 		}: AwaitQueueOptions =
 		{
-			ClosedErrorClass  : Error,
-			StoppedErrorClass : Error
+			ClosedErrorClass      : Error,
+			StoppedErrorClass     : Error,
+			RemovedTaskErrorClass : Error
 		}
 	)
 	{
 		this.ClosedErrorClass = ClosedErrorClass;
 		this.StoppedErrorClass = StoppedErrorClass;
+		this.RemovedTaskErrorClass = RemovedTaskErrorClass;
 	}
 
-	/**
-	 * The number of ongoing enqueued tasks.
-	 */
 	get size(): number
 	{
 		return this.pendingTasks.length;
 	}
 
-	/**
-	 * Closes the AwaitQueue. Pending tasks will be rejected with ClosedErrorClass
-	 * error.
-	 */
 	close(): void
 	{
 		if (this.closed)
@@ -91,13 +96,6 @@ export class AwaitQueue
 		this.pendingTasks.length = 0;
 	}
 
-	/**
-	 * Accepts a task as argument (and an optional task name) and enqueues it after
-	 * pending tasks. Once processed, the push() method resolves (or rejects) with
-	 * the result returned by the given task.
-	 *
-	 * The given task must return a Promise or directly a value.
-	 */
 	async push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T>
 	{
 		if (this.closed)
@@ -138,11 +136,24 @@ export class AwaitQueue
 		});
 	}
 
-	/**
-	 * Make ongoing pending tasks reject with the given StoppedErrorClass error.
-	 * The AwaitQueue instance is still usable for future tasks added via push()
-	 * method.
-	 */
+	removeTask(idx: number): void
+	{
+		if (idx === 0)
+		{
+			throw new TypeError('cannot remove task with index 0');
+		}
+
+		const pendingTask = this.pendingTasks[idx];
+
+		if (!pendingTask)
+			return;
+
+		this.pendingTasks.splice(idx, 1);
+
+		pendingTask.reject(
+			new this.RemovedTaskErrorClass('task removed from the queue'));
+	}
+
 	stop(): void
 	{
 		if (this.closed)
@@ -161,10 +172,11 @@ export class AwaitQueue
 	dump(): AwaitQueueDumpItem[]
 	{
 		const now = new Date();
+		let idx = 0;
 
-		return this.pendingTasks.map((pendingTask) =>
-		{
-			return {
+		return this.pendingTasks.map((pendingTask) => (
+			{
+				idx          : idx++,
 				task         : pendingTask.task,
 				name         : pendingTask.name,
 				enqueuedTime : pendingTask.executedAt
@@ -173,8 +185,8 @@ export class AwaitQueue
 				executingTime : pendingTask.executedAt
 					? now.getTime() - pendingTask.executedAt.getTime()
 					: 0
-			};
-		});
+			}
+		));
 	}
 
 	private async next(): Promise<any>
