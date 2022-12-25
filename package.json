@@ -10,10 +10,14 @@
   },
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=14"
   },
   "scripts": {
+    "prepare": "npm run typescript:build",
     "typescript:build": "rm -rf lib && tsc",
     "typescript:watch": "rm -rf lib && (tsc --watch --pretty)",
     "lint": "eslint -c .eslintrc.js --max-warnings 0 src .eslintrc.js",

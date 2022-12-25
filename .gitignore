@@ -1,3 +1,14 @@
+## Node.
 /node_modules
-/.cache
+/lib
 
+## Others.
+/coverage
+/.cache
+*.swp
+*.swo
+.DS_Store
+# Vistual Studio Code stuff.
+/.vscode
+# JetBrains IDE stuff.
+/.idea
