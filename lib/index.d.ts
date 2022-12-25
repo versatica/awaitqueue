@@ -1,40 +1,40 @@
-export declare type AwaitQueueOptions = {
-    /**
-     * Custom Error derived class that will be used to reject pending tasks after
-     * close() method has been called. If not set, Error class is used.
-     */
-    ClosedErrorClass?: any;
-    /**
-     * Custom Error derived class that will be used to reject pending tasks after
-     * stop() method has been called. If not set, Error class is used.
-     */
-    StoppedErrorClass?: any;
-    /**
-     * Custom Error derived class that will be used to reject removed tasks after
-     * removeTask() method has been called. If not set, Error class is used.
-     */
-    RemovedTaskErrorClass?: any;
-};
-export declare type AwaitQueueTask<T> = () => (Promise<T> | T);
-export declare type AwaitQueueDumpItem = {
+export type AwaitQueueTask<T> = () => (Promise<T> | T);
+export type AwaitQueueDumpItem = {
     idx: number;
     task: AwaitQueueTask<unknown>;
     name?: string;
     enqueuedTime: number;
     executingTime: number;
 };
+/**
+ * Custom Error derived class used to reject pending tasks once close() method
+ * has been called.
+ */
+export declare class AwaitQueueClosedError extends Error {
+    constructor(message?: string);
+}
+/**
+ * Custom Error derived class used to reject pending tasks once stop() method
+ * has been called.
+ */
+export declare class AwaitQueueStoppedError extends Error {
+    constructor(message?: string);
+}
+/**
+ * Custom Error derived class used to reject pending tasks once removeTask()
+ * method has been called.
+ */
+export declare class AwaitQueueRemovedTaskError extends Error {
+    constructor(message?: string);
+}
 export declare class AwaitQueue {
     private closed;
     private readonly pendingTasks;
-    private readonly ClosedErrorClass;
-    private readonly StoppedErrorClass;
-    private readonly RemovedTaskErrorClass;
-    constructor({ ClosedErrorClass, StoppedErrorClass, RemovedTaskErrorClass }?: AwaitQueueOptions);
     get size(): number;
     close(): void;
+    stop(): void;
     push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T>;
     removeTask(idx: number): void;
-    stop(): void;
     dump(): AwaitQueueDumpItem[];
     private next;
     private executeTask;
