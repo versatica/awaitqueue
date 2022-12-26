@@ -6,7 +6,7 @@ export type AwaitQueueTaskDump =
 	task: AwaitQueueTask<unknown>;
 	name?: string;
 	enqueuedTime: number;
-	executingTime: number;
+	executionTime: number;
 };
 
 type PendingTask<T> =
@@ -152,7 +152,7 @@ export class AwaitQueue
 				enqueuedTime : pendingTask.executedAt
 					? pendingTask.executedAt - pendingTask.enqueuedAt
 					: now - pendingTask.enqueuedAt,
-				executingTime : pendingTask.executedAt
+				executionTime : pendingTask.executedAt
 					? now - pendingTask.executedAt
 					: 0
 			}

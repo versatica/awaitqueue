@@ -55,7 +55,7 @@ type AwaitQueueTaskDump =
   task: AwaitQueueTask<unknown>;
   name?: string;
   enqueuedTime: number;
-  executingTime: number;
+  executionTime: number;
 };
 ```
 
@@ -65,7 +65,7 @@ TypeScript type representing an item in the array returned by the `awaitQueue.du
 * `task`: The function to be executed.
 * `name`: The name of the given `function` (if any) or the `name` argument given to `awaitQueue.push()` method (if any).
 * `enqueuedTime`: Time in milliseconds since the task was enqueued, this is, since `awaitQueue.push()` was called until its execution started or until now if not yet started.
-* `executingTime`: Time in milliseconds since the task execution started (or 0 if not yet started).
+* `executionTime`: Time in milliseconds since the task execution started (or 0 if not yet started).
 
 
 ## API
