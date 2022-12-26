@@ -2,145 +2,137 @@ import {
 	AwaitQueue,
 	AwaitQueueStoppedError,
 	AwaitQueueRemovedTaskError
-} from '.';
+} from './';
 
 test('pushed tasks run sequentially', async () =>
 {
 	const awaitQueue = new AwaitQueue();
-	let resultTaskA: string | undefined;
-	let resultTaskB: AwaitQueueRemovedTaskError | undefined;
-	let resultTaskC: string | undefined;
-	let resultTaskD: AwaitQueueStoppedError | undefined;
-	let resultTaskE: AwaitQueueStoppedError | undefined;
-	const strings: string[] = [];
+	let resultTaskA: string | Error | undefined;
+	let resultTaskB: string | Error | undefined;
+	let resultTaskC: string | Error | undefined;
+	let resultTaskD: string | Error | undefined;
+	let resultTaskE: string | Error | undefined;
+	let resultTaskF: string | Error | undefined;
+	const resolvedResults: string[] = [];
 
 	const taskA = async (): Promise<string> =>
 	{
-		strings.push('A1');
+		resolvedResults.push('A1');
 		await wait(50);
-		strings.push('A2');
+		resolvedResults.push('A2');
+
+		// Note that taskB was already removed when taskA started being processed.
+		expectDumpToContain(awaitQueue, [ 'taskA', 'taskC', 'taskD', 'taskE', 'taskF' ]);
 
 		return 'taskA';
 	};
 
 	const taskB = async (): Promise<string> =>
 	{
-		strings.push('B1');
+		resolvedResults.push('B1');
 		await wait(50);
-		strings.push('B2');
+		resolvedResults.push('B2');
 
 		return 'taskB';
 	};
 
 	const taskC = (): string =>
 	{
-		strings.push('C1');
-		strings.push('C2');
+		resolvedResults.push('C1');
+		resolvedResults.push('C2');
+
+		expectDumpToContain(awaitQueue, [ 'taskC', 'taskD', 'taskE', 'taskF' ]);
 
 		return 'taskC';
 	};
 
 	const taskD = async (): Promise<string> =>
 	{
-		strings.push('D1');
+		resolvedResults.push('D1');
 		await wait(50);
-		strings.push('D2');
+		resolvedResults.push('D2');
 
-		// Make taskD and taskE reject with AwaitQueueStoppedError.
-		awaitQueue.stop();
+		expectDumpToContain(awaitQueue, [ 'taskD', 'taskE', 'taskF' ]);
+
+		// Remove taskD so it must reject with AwaitQueueRemovedTaskError.
+		awaitQueue.remove(0);
+
+		expectDumpToContain(awaitQueue, [ 'taskE', 'taskF' ]);
 
 		return 'taskD';
 	};
 
 	const taskE = async (): Promise<string> =>
 	{
-		strings.push('E1');
+		resolvedResults.push('E1');
 		await wait(50);
-		strings.push('E2');
+		resolvedResults.push('E2');
 
-		return 'taskE';
+		expectDumpToContain(awaitQueue, [ 'taskE', 'taskF' ]);
+
+		// Make taskE and taskF reject with AwaitQueueStoppedError.
+		awaitQueue.stop();
+
+		expectDumpToContain(awaitQueue, []);
+
+		return 'taskD';
+	};
+
+	const taskF = async (): Promise<string> =>
+	{
+		resolvedResults.push('F1');
+		await wait(50);
+		resolvedResults.push('F2');
+
+		return 'taskF';
 	};
 
 	// Create a Promise that will resolve once last taskE completes.
 	const tasksPromise = new Promise<void>((resolve) =>
 	{
-		awaitQueue.push(taskA, 'taskA').then((result) => { resultTaskA = result; });
-		awaitQueue.push(taskB, 'taskB').catch((error) => { resultTaskB = error; });
-		awaitQueue.push(taskC, 'taskC').then((result) => { resultTaskC = result; });
-		awaitQueue.push(taskD, 'taskD').catch((error) => { resultTaskD = error; });
-		awaitQueue.push(taskE, 'taskE').catch((error) => { resultTaskE = error; resolve(); });
+		awaitQueue.push(taskA, 'taskA')
+			.then((result) => { resultTaskA = result; })
+			.catch((error) => { resultTaskA = error; });
+
+		awaitQueue.push(taskB, 'taskB')
+			.then((result) => { resultTaskB = result; })
+			.catch((error) => { resultTaskB = error; });
+
+		awaitQueue.push(taskC, 'taskC')
+			.then((result) => { resultTaskC = result; })
+			.catch((error) => { resultTaskC = error; });
+
+		awaitQueue.push(taskD, 'taskD')
+			.then((result) => { resultTaskD = result; })
+			.catch((error) => { resultTaskD = error; });
+
+		awaitQueue.push(taskE, 'taskE')
+			.then((result) => { resultTaskE = result; })
+			.catch((error) => { resultTaskE = error; });
+
+		awaitQueue.push(taskF, 'taskF')
+			.then((result) => { resultTaskF = result; })
+			.catch((error) => { resultTaskF = error; resolve(); });
 	});
 
-	expect(awaitQueue.size).toBe(5);
+	expectDumpToContain(awaitQueue, [ 'taskA', 'taskB', 'taskC', 'taskD', 'taskE', 'taskF' ]);
 
-	const dump1 = awaitQueue.dump();
-
-	expect(dump1.length).toBe(5);
-	expect(dump1[0]).toMatchObject(
-		{
-			idx  : 0,
-			name : 'taskA'
-		});
-	expect(dump1[1]).toMatchObject(
-		{
-			idx  : 1,
-			name : 'taskB'
-		});
-	expect(dump1[2]).toMatchObject(
-		{
-			idx  : 2,
-			name : 'taskC'
-		});
-	expect(dump1[3]).toMatchObject(
-		{
-			idx  : 3,
-			name : 'taskD'
-		});
-	expect(dump1[4]).toMatchObject(
-		{
-			idx  : 4,
-			name : 'taskE'
-		});
-
-	// Remove taskB.
+	// Remove taskB so it must reject with AwaitQueueRemovedTaskError.
 	awaitQueue.remove(1);
 
-	expect(awaitQueue.size).toBe(4);
-
-	const dump2 = awaitQueue.dump();
-
-	expect(dump2.length).toBe(4);
-	expect(dump2[0]).toMatchObject(
-		{
-			idx  : 0,
-			name : 'taskA'
-		});
-	expect(dump2[1]).toMatchObject(
-		{
-			idx  : 1,
-			name : 'taskC'
-		});
-	expect(dump2[2]).toMatchObject(
-		{
-			idx  : 2,
-			name : 'taskD'
-		});
-	expect(dump2[3]).toMatchObject(
-		{
-			idx  : 3,
-			name : 'taskE'
-		});
+	expectDumpToContain(awaitQueue, [ 'taskA', 'taskC', 'taskD', 'taskE', 'taskF' ]);
 
 	// Wait for all tasks to complete.
 	await tasksPromise;
 
-	expect(strings).toEqual([ 'A1', 'A2', 'C1', 'C2', 'D1', 'D2' ]);
 	expect(resultTaskA).toBe('taskA');
 	expect(resultTaskB instanceof AwaitQueueRemovedTaskError).toBe(true);
 	expect(resultTaskC).toBe('taskC');
-	expect(resultTaskD instanceof AwaitQueueStoppedError).toBe(true);
+	expect(resultTaskD instanceof AwaitQueueRemovedTaskError).toBe(true);
 	expect(resultTaskE instanceof AwaitQueueStoppedError).toBe(true);
-}, 5000);
+	expect(resultTaskF instanceof AwaitQueueStoppedError).toBe(true);
+	expect(resolvedResults).toEqual([ 'A1', 'A2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2' ]);
+}, 1000);
 
 async function wait(timeMs: number): Promise<void>
 {
@@ -148,4 +140,21 @@ async function wait(timeMs: number): Promise<void>
 	{
 		setTimeout(resolve, timeMs);
 	});
+}
+
+function expectDumpToContain(awaitQueue: AwaitQueue, taskNames: string[]): void
+{
+	const dump = awaitQueue.dump();
+
+	expect(awaitQueue.size).toBe(taskNames.length);
+	expect(dump.length).toBe(taskNames.length);
+
+	for (let i = 0; i < taskNames.length; ++i)
+	{
+		expect(dump[i]).toMatchObject(
+			{
+				idx  : i,
+				name : taskNames[i]
+			});
+	}
 }
