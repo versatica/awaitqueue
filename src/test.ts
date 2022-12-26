@@ -1,6 +1,6 @@
 import {
 	AwaitQueue,
-	AwaitQueueClosedError,
+	AwaitQueueStoppedError,
 	AwaitQueueRemovedTaskError
 } from '.';
 
@@ -10,14 +10,14 @@ test('pushed tasks run sequentially', async () =>
 	let resultTaskA: string | undefined;
 	let resultTaskB: AwaitQueueRemovedTaskError | undefined;
 	let resultTaskC: string | undefined;
-	let resultTaskD: AwaitQueueClosedError | undefined;
-	let resultTaskE: AwaitQueueClosedError | undefined;
+	let resultTaskD: AwaitQueueStoppedError | undefined;
+	let resultTaskE: AwaitQueueStoppedError | undefined;
 	const strings: string[] = [];
 
 	const taskA = async (): Promise<string> =>
 	{
 		strings.push('A1');
-		await wait(10);
+		await wait(50);
 		strings.push('A2');
 
 		return 'taskA';
@@ -26,16 +26,15 @@ test('pushed tasks run sequentially', async () =>
 	const taskB = async (): Promise<string> =>
 	{
 		strings.push('B1');
-		await wait(10);
+		await wait(50);
 		strings.push('B2');
 
 		return 'taskB';
 	};
 
-	const taskC = async (): Promise<string> =>
+	const taskC = (): string =>
 	{
 		strings.push('C1');
-		await wait(10);
 		strings.push('C2');
 
 		return 'taskC';
@@ -44,11 +43,11 @@ test('pushed tasks run sequentially', async () =>
 	const taskD = async (): Promise<string> =>
 	{
 		strings.push('D1');
-		await wait(10);
+		await wait(50);
 		strings.push('D2');
 
-		// Make taskD and taskE reject with AwaitQueueClosedError.
-		awaitQueue.close();
+		// Make taskD and taskE reject with AwaitQueueStoppedError.
+		awaitQueue.stop();
 
 		return 'taskD';
 	};
@@ -56,17 +55,21 @@ test('pushed tasks run sequentially', async () =>
 	const taskE = async (): Promise<string> =>
 	{
 		strings.push('E1');
-		await wait(10);
+		await wait(50);
 		strings.push('E2');
 
 		return 'taskE';
 	};
 
-	awaitQueue.push(taskA, 'taskA').then((result) => { resultTaskA = result; });
-	awaitQueue.push(taskB, 'taskB').catch((error) => { resultTaskB = error; });
-	awaitQueue.push(taskC, 'taskC').then((result) => { resultTaskC = result; });
-	awaitQueue.push(taskD, 'taskD').catch((error) => { resultTaskD = error; });
-	awaitQueue.push(taskE, 'taskE').catch((error) => { resultTaskE = error; });
+	// Create a Promise that will resolve once last taskE completes.
+	const tasksPromise = new Promise<void>((resolve) =>
+	{
+		awaitQueue.push(taskA, 'taskA').then((result) => { resultTaskA = result; });
+		awaitQueue.push(taskB, 'taskB').catch((error) => { resultTaskB = error; });
+		awaitQueue.push(taskC, 'taskC').then((result) => { resultTaskC = result; });
+		awaitQueue.push(taskD, 'taskD').catch((error) => { resultTaskD = error; });
+		awaitQueue.push(taskE, 'taskE').catch((error) => { resultTaskE = error; resolve(); });
+	});
 
 	expect(awaitQueue.size).toBe(5);
 
@@ -100,7 +103,7 @@ test('pushed tasks run sequentially', async () =>
 		});
 
 	// Remove taskB.
-	awaitQueue.removeTask(1);
+	awaitQueue.remove(1);
 
 	expect(awaitQueue.size).toBe(4);
 
@@ -128,15 +131,15 @@ test('pushed tasks run sequentially', async () =>
 			name : 'taskE'
 		});
 
-	// Give enough time for all tasks to complete.
-	await wait(200);
+	// Wait for all tasks to complete.
+	await tasksPromise;
 
 	expect(strings).toEqual([ 'A1', 'A2', 'C1', 'C2', 'D1', 'D2' ]);
 	expect(resultTaskA).toBe('taskA');
 	expect(resultTaskB instanceof AwaitQueueRemovedTaskError).toBe(true);
 	expect(resultTaskC).toBe('taskC');
-	expect(resultTaskD instanceof AwaitQueueClosedError).toBe(true);
-	expect(resultTaskE instanceof AwaitQueueClosedError).toBe(true);
+	expect(resultTaskD instanceof AwaitQueueStoppedError).toBe(true);
+	expect(resultTaskE instanceof AwaitQueueStoppedError).toBe(true);
 }, 5000);
 
 async function wait(timeMs: number): Promise<void>

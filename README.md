@@ -17,8 +17,7 @@ $ npm install awaitqueue
 import {
   AwaitQueue,
   AwaitQueueTask,
-  AwaitQueueDumpItem,
-  AwaitQueueClosedError,
+  AwaitQueueTaskDump,
   AwaitQueueStoppedError,
   AwaitQueueRemovedTaskError
 } from 'awaitqueue';
@@ -30,8 +29,7 @@ import {
 const { 
   AwaitQueue,
   AwaitQueueTask,
-  AwaitQueueDumpItem,
-  AwaitQueueClosedError,
+  AwaitQueueTaskDump,
   AwaitQueueStoppedError,
   AwaitQueueRemovedTaskError
 } = require('awaitqueue');
@@ -43,15 +41,15 @@ const {
 #### `type AwaitQueueTask`
 
 ```typescript
-type AwaitQueueTask<T> = () => (Promise<T> | T)
+type AwaitQueueTask<T> = () => (T | PromiseLike<T>);
 ```
 
 TypeScript type representing a function that returns a value `T` or a Promise that resolves with `T`.
 
-#### `type AwaitQueueDumpItem`
+#### `type AwaitQueueTaskDump`
 
 ```typescript
-type AwaitQueueDumpItem =
+type AwaitQueueTaskDump =
 {
   idx: number;
   task: AwaitQueueTask<unknown>;
@@ -78,32 +76,28 @@ Creates an `AwaitQueue` instance.
 
 #### `awaitQueue.size: number`
 
-The number of enqueued tasks.
+Number of enqueued pending tasks.
 
 #### `async awaitQueue.push(task: AwaitQueueTask<T>, name?: string): Promise<T>`
 
 Accepts a task as argument and enqueues it after pending tasks. Once processed, the `push()` method resolves (or rejects) with the result returned by the given task.
 
-* `@param task`: Function that must return a `Promise` or a directly a value.
+* `@param task`: Asynchronous or asynchronous function.
 * `@param name`: Optional task name (useful for `awaitQueue.dump()` method).
-
-#### `awaitQueue.removeTask(idx: number): void`
-
-Removes the pending task with given index. The task is rejected with an instance of `AwaitQueueRemovedTaskError`. Pending task with index 0 cannot be removed.
-
-* `@param idx`: Index of the pending task to be removed.
-
-#### `awaitQueue.close(): void`
-
-Closes the queue. Pending tasks will be rejected with an instance of `AwaitQueueClosedError`. The `AwaitQueue` instance is no longer usable (this method is terminal).
 
 #### `awaitQueue.stop(): void`
 
 Make pending tasks reject with an instance of `AwaitQueueStoppedError`. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
 
-#### `awaitQueue.dump(): AwaitQueueDumpItem[]`
+#### `awaitQueue.remove(taskIdx: number): void`
 
-Returns an array with information about pending tasks in the queue. See the `AwaitQueueDumpItem` type above.
+Removes the pending task with given index. The task is rejected with an instance of `AwaitQueueRemovedTaskError`.
+
+* `@param taskIdx`: Index of the pending task to be removed.
+
+#### `awaitQueue.dump(): AwaitQueueTaskDump[]`
+
+Returns an array with information about pending tasks in the queue. See the `AwaitQueueTaskDump` type above.
 
 
 ## Usage example

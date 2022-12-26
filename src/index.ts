@@ -1,6 +1,6 @@
-export type AwaitQueueTask<T> = () => (Promise<T> | T);
+export type AwaitQueueTask<T> = () => (T | PromiseLike<T>);
 
-export type AwaitQueueDumpItem =
+export type AwaitQueueTaskDump =
 {
 	idx: number;
 	task: AwaitQueueTask<unknown>;
@@ -13,33 +13,12 @@ type PendingTask<T> =
 {
 	task: AwaitQueueTask<T>;
 	name?: string;
+	enqueuedAt: number;
+	executedAt?: number;
+	stopped: boolean;
 	resolve: (value: T | PromiseLike<T>) => void;
 	reject: (error: Error) => void;
-	enqueuedAt: Date;
-	executedAt?: Date;
-	stopped: boolean;
 };
-
-/**
- * Custom Error derived class used to reject pending tasks once close() method
- * has been called.
- */
-export class AwaitQueueClosedError extends Error
-{
-	constructor(message?: string)
-	{
-		super(message ?? 'AwaitQueue closed');
-
-		this.name = 'AwaitQueueClosedError';
-
-		// @ts-ignore
-		if (typeof Error.captureStackTrace === 'function')
-		{
-			// @ts-ignore
-			Error.captureStackTrace(this, AwaitQueueClosedError);
-		}
-	}
-}
 
 /**
  * Custom Error derived class used to reject pending tasks once stop() method
@@ -85,9 +64,6 @@ export class AwaitQueueRemovedTaskError extends Error
 
 export class AwaitQueue
 {
-	// Closed flag.
-	private closed = false;
-
 	// Queue of pending tasks.
 	private readonly pendingTasks: Array<PendingTask<any>> = [];
 
@@ -96,49 +72,8 @@ export class AwaitQueue
 		return this.pendingTasks.length;
 	}
 
-	close(): void
-	{
-		if (this.closed)
-		{
-			return;
-		}
-
-		this.closed = true;
-
-		for (const pendingTask of this.pendingTasks)
-		{
-			pendingTask.stopped = true;
-			pendingTask.reject(new AwaitQueueClosedError());
-		}
-
-		// Enpty the pending tasks array.
-		this.pendingTasks.length = 0;
-	}
-
-	stop(): void
-	{
-		if (this.closed)
-		{
-			return;
-		}
-
-		for (const pendingTask of this.pendingTasks)
-		{
-			pendingTask.stopped = true;
-			pendingTask.reject(new AwaitQueueStoppedError());
-		}
-
-		// Enpty the pending tasks array.
-		this.pendingTasks.length = 0;
-	}
-
 	async push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T>
 	{
-		if (this.closed)
-		{
-			throw new AwaitQueueClosedError();
-		}
-
 		if (typeof task !== 'function')
 		{
 			throw new TypeError('given task is not a function');
@@ -160,11 +95,11 @@ export class AwaitQueue
 			{
 				task,
 				name,
-				resolve,
-				reject,
 				stopped    : false,
-				enqueuedAt : new Date(),
-				executedAt : undefined
+				enqueuedAt : Date.now(),
+				executedAt : undefined,
+				resolve,
+				reject
 			};
 
 			// Append task to the queue.
@@ -178,33 +113,35 @@ export class AwaitQueue
 		});
 	}
 
-	removeTask(idx: number): void
+	stop(): void
 	{
-		if (this.closed)
+		for (const pendingTask of this.pendingTasks)
 		{
-			return;
+			pendingTask.stopped = true;
+			pendingTask.reject(new AwaitQueueStoppedError());
 		}
 
-		if (idx === 0)
-		{
-			throw new TypeError('cannot remove task with index 0');
-		}
+		// Enpty the pending tasks array.
+		this.pendingTasks.length = 0;
+	}
 
-		const pendingTask = this.pendingTasks[idx];
+	remove(taskIdx: number): void
+	{
+		const pendingTask = this.pendingTasks[taskIdx];
 
 		if (!pendingTask)
 		{
 			return;
 		}
 
-		this.pendingTasks.splice(idx, 1);
+		this.pendingTasks.splice(taskIdx, 1);
 
 		pendingTask.reject(new AwaitQueueRemovedTaskError());
 	}
 
-	dump(): AwaitQueueDumpItem[]
+	dump(): AwaitQueueTaskDump[]
 	{
-		const now = new Date();
+		const now = Date.now();
 		let idx = 0;
 
 		return this.pendingTasks.map((pendingTask) => (
@@ -213,10 +150,10 @@ export class AwaitQueue
 				task         : pendingTask.task,
 				name         : pendingTask.name,
 				enqueuedTime : pendingTask.executedAt
-					? pendingTask.executedAt.getTime() - pendingTask.enqueuedAt.getTime()
-					: now.getTime() - pendingTask.enqueuedAt.getTime(),
+					? pendingTask.executedAt - pendingTask.enqueuedAt
+					: now - pendingTask.enqueuedAt,
 				executingTime : pendingTask.executedAt
-					? now.getTime() - pendingTask.executedAt.getTime()
+					? now - pendingTask.executedAt
 					: 0
 			}
 		));
@@ -236,7 +173,11 @@ export class AwaitQueue
 		await this.executeTask(pendingTask);
 
 		// Remove the first pending task (the completed one) from the queue.
-		this.pendingTasks.shift();
+		// NOTE: Ensure it remains being the same.
+		if (this.pendingTasks[0] === pendingTask)
+		{
+			this.pendingTasks.shift();
+		}
 
 		// And continue.
 		void this.next();
@@ -250,7 +191,7 @@ export class AwaitQueue
 			return;
 		}
 
-		pendingTask.executedAt = new Date();
+		pendingTask.executedAt = Date.now();
 
 		try
 		{
