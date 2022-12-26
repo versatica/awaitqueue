@@ -14,13 +14,27 @@ $ npm install awaitqueue
 * In ES6:
 
 ```js
-import { AwaitQueue, AwaitQueueTask, AwaitQueueDumpItem } from 'awaitqueue';
+import {
+  AwaitQueue,
+  AwaitQueueTask,
+  AwaitQueueDumpItem,
+  AwaitQueueClosedError,
+  AwaitQueueStoppedError,
+  AwaitQueueRemovedTaskError
+} from 'awaitqueue';
 ```
 
 * In CommonJS:
 
 ```js
-const { AwaitQueue, AwaitQueueTask, AwaitQueueDumpItem } = require('awaitqueue');
+const { 
+  AwaitQueue,
+  AwaitQueueTask,
+  AwaitQueueDumpItem,
+  AwaitQueueClosedError,
+  AwaitQueueStoppedError,
+  AwaitQueueRemovedTaskError
+} = require('awaitqueue');
 ```
 
 
