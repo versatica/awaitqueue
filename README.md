@@ -1,6 +1,6 @@
 # AwaitQueue
 
-JavaScript utility to enqueue async tasks for Node.js and the browser.
+JavaScript utility to enqueue asynchronous tasks and run them sequentially one after another. For Node.js and the browser.
 
 
 ## Installation

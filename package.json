@@ -1,7 +1,7 @@
 {
   "name": "awaitqueue",
   "version": "3.0.0-beta.1",
-  "description": "JavaScript utility to enqueue async tasks for Node.js and the browser",
+  "description": "JavaScript utility to enqueue asynchronous tasks and run them sequentially one after another",
   "author": "Iñaki Baz Castillo <ibc@aliax.net> (https://inakibaz.me)",
   "license": "ISC",
   "repository": {
