@@ -3,6 +3,7 @@ import {
 	AwaitQueueStoppedError,
 	AwaitQueueRemovedTaskError
 } from './';
+import { EventEmitter } from 'node:events';
 
 test('pushed tasks run sequentially', async () =>
 {
@@ -132,6 +133,55 @@ test('pushed tasks run sequentially', async () =>
 	expect(resultTaskE instanceof AwaitQueueStoppedError).toBe(true);
 	expect(resultTaskF instanceof AwaitQueueStoppedError).toBe(true);
 	expect(resolvedResults).toEqual([ 'A1', 'A2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2' ]);
+}, 1000);
+
+test('new task does not lead to next task execution if a (stopped) one is ongoing', async () =>
+{
+	const awaitQueue = new AwaitQueue();
+	const executionsCount: Map<string, number> = new Map();
+	const emitter = new EventEmitter();
+
+	const taskA = function()
+	{
+		const taskName = 'taskA';
+
+		return new Promise((resolve) =>
+		{
+			let executionCount = executionsCount.get(taskName) || 0;
+
+			executionsCount.set(taskName, ++executionCount);
+
+			emitter.on('resolve-task-a', resolve);
+		});
+	};
+
+	const taskB = function()
+	{
+		const taskName = 'taskB';
+
+		return new Promise((resolve) =>
+		{
+			let executionCount = executionsCount.get(taskName) || 0;
+
+			executionsCount.set(taskName, ++executionCount);
+
+			resolve(true);
+		});
+	};
+
+	// Add task A into the AwaitQueue. Ignore the stop error.
+	awaitQueue.push(taskA).catch(() => {});
+	// Stop the queue.
+	awaitQueue.stop();
+	// Add a task B into the AwaitQueue.
+	awaitQueue.push(taskB);
+	// Task A is still running, terminate it.
+	emitter.emit('resolve-task-a');
+
+	await wait(0);
+
+	expect(executionsCount.get('taskA')).toBe(1);
+	expect(executionsCount.get('taskB')).toBe(1);
 }, 1000);
 
 async function wait(timeMs: number): Promise<void>

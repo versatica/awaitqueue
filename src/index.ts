@@ -172,6 +172,12 @@ export class AwaitQueue
 		// Execute it.
 		await this.executeTask(pendingTask);
 
+		// If the task is stopped, ignore it.
+		if (pendingTask.stopped)
+		{
+			return;
+		}
+
 		// Remove the first pending task (the completed one) from the queue.
 		// NOTE: Ensure it remains being the same.
 		if (this.pendingTasks[0] === pendingTask)
