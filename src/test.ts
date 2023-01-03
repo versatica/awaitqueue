@@ -165,7 +165,7 @@ test('new task does not lead to next task execution if a (stopped) one is ongoin
 
 			executionsCount.set(taskName, ++executionCount);
 
-			resolve(true);
+			emitter.on('resolve-task-b', resolve);
 		});
 	};
 
@@ -182,6 +182,9 @@ test('new task does not lead to next task execution if a (stopped) one is ongoin
 
 	expect(executionsCount.get('taskA')).toBe(1);
 	expect(executionsCount.get('taskB')).toBe(1);
+
+	// Terminate task B.
+	emitter.emit('resolve-task-b');
 }, 1000);
 
 async function wait(timeMs: number): Promise<void>
