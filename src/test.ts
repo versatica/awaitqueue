@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import {
 	AwaitQueue,
 	AwaitQueueStoppedError,
@@ -132,6 +133,108 @@ test('pushed tasks run sequentially', async () =>
 	expect(resultTaskE instanceof AwaitQueueStoppedError).toBe(true);
 	expect(resultTaskF instanceof AwaitQueueStoppedError).toBe(true);
 	expect(resolvedResults).toEqual([ 'A1', 'A2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2' ]);
+}, 1000);
+
+test('new task does not lead to next task execution if a stopped one is ongoing', async () =>
+{
+	const awaitQueue = new AwaitQueue();
+	const executionsCount: Map<string, number> = new Map();
+	const emitter = new EventEmitter();
+
+	const taskA = function()
+	{
+		const taskName = 'taskA';
+
+		return new Promise((resolve) =>
+		{
+			let executionCount = executionsCount.get(taskName) || 0;
+
+			executionsCount.set(taskName, ++executionCount);
+
+			emitter.on('resolve-task-a', resolve);
+		});
+	};
+
+	const taskB = function()
+	{
+		const taskName = 'taskB';
+
+		return new Promise((resolve) =>
+		{
+			let executionCount = executionsCount.get(taskName) || 0;
+
+			executionsCount.set(taskName, ++executionCount);
+
+			emitter.on('resolve-task-b', resolve);
+		});
+	};
+
+	const taskC = function()
+	{
+		const taskName = 'taskC';
+
+		return new Promise((resolve) =>
+		{
+			let executionCount = executionsCount.get(taskName) || 0;
+
+			executionsCount.set(taskName, ++executionCount);
+
+			emitter.on('resolve-task-c', resolve);
+		});
+	};
+
+	const taskD = function()
+	{
+		const taskName = 'taskD';
+
+		return new Promise((resolve) =>
+		{
+			let executionCount = executionsCount.get(taskName) || 0;
+
+			executionsCount.set(taskName, ++executionCount);
+
+			emitter.on('resolve-task-d', resolve);
+		});
+	};
+
+	// Add task A into the AwaitQueue. Ignore the stop error and push task D during
+	// the rejection.
+	awaitQueue.push(taskA, 'taskA')
+		.catch(() => awaitQueue.push(taskD, 'taskD'));
+
+	// Add a task B into the AwaitQueue. Ignore stop error.
+	awaitQueue.push(taskB, 'taskB')
+		.catch(() => {});
+
+	// Stop the queue. This will make tasks A and B reject and task D will be pushed.
+	awaitQueue.stop();
+
+	// Add a task C into the AwaitQueue.
+	awaitQueue.push(taskC, 'taskC');
+
+	// Task A is still running (despite it was stopped), terminate it.
+	emitter.emit('resolve-task-a');
+
+	// Task A was stopped while running.
+	expect(executionsCount.get('taskA')).toBe(1);
+	// Task B was stopped before running.
+	expect(executionsCount.get('taskB')).toBe(undefined);
+	// Task C was executed entirely.
+	expect(executionsCount.get('taskC')).toBe(1);
+
+	// Terminate tasks B and C (despite B was stopped).
+	emitter.emit('resolve-task-b');
+	emitter.emit('resolve-task-c');
+
+	// Needed to wait for the execution of task D (otherwise the emit() call below
+	// would happen before the listener is set.
+	await wait(0);
+
+	// Terminate task D.
+	emitter.emit('resolve-task-d');
+
+	// Task D has resolved.
+	expect(executionsCount.get('taskD')).toBe(1);
 }, 1000);
 
 async function wait(timeMs: number): Promise<void>
