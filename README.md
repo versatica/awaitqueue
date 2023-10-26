@@ -1,5 +1,8 @@
 # AwaitQueue
 
+[![][npm-shield-awaitqueue]][npm-awaitqueue]
+[![][github-actions-shield-awaitqueue]][github-actions-awaitqueue]
+
 JavaScript utility to enqueue asynchronous tasks and run them sequentially one after another. For Node.js and the browser.
 
 
@@ -113,3 +116,11 @@ See [test.ts](src/test.ts) file.
 ## License
 
 [ISC](./LICENSE)
+
+
+
+
+[npm-shield-awaitqueue]: https://img.shields.io/npm/v/awaitqueue.svg
+[npm-awaitqueue]: https://npmjs.org/package/awaitqueue
+[github-actions-shield-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml/badge.svg
+[github-actions-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml
