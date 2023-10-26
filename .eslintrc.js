@@ -13,18 +13,14 @@ const eslintConfig =
 	settings      : {},
 	parserOptions :
 	{
-		ecmaVersion  : 2018,
+		ecmaVersion  : 2022,
 		sourceType   : 'module',
 		ecmaFeatures :
 		{
 			impliedStrict : true
 		},
-		lib     : [ 'es2018' ],
+		lib     : [ 'es2022' ],
 		project : 'tsconfig.json'
-	},
-	globals :
-	{
-		NodeJS : 'readonly'
 	},
 	rules :
 	{
@@ -44,6 +40,7 @@ const eslintConfig =
 		'comma-style'               : 2,
 		'computed-property-spacing' : 2,
 		'constructor-super'         : 2,
+		'curly'                     : [ 2, 'all' ],
 		'func-call-spacing'         : 2,
 		'generator-star-spacing'    : 2,
 		'guard-for-in'              : 2,
