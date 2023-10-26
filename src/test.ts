@@ -147,7 +147,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 
 		return new Promise((resolve) =>
 		{
-			let executionCount = executionsCount.get(taskName) || 0;
+			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
 
@@ -161,7 +161,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 
 		return new Promise((resolve) =>
 		{
-			let executionCount = executionsCount.get(taskName) || 0;
+			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
 
@@ -175,7 +175,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 
 		return new Promise((resolve) =>
 		{
-			let executionCount = executionsCount.get(taskName) || 0;
+			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
 
@@ -189,7 +189,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 
 		return new Promise((resolve) =>
 		{
-			let executionCount = executionsCount.get(taskName) || 0;
+			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
 
