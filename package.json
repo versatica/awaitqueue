@@ -42,15 +42,15 @@
     }
   },
   "devDependencies": {
-    "@types/debug": "^4.1.10",
-    "@types/jest": "^29.5.6",
-    "@typescript-eslint/eslint-plugin": "^6.9.0",
-    "@typescript-eslint/parser": "^6.9.0",
+    "@types/debug": "^4.1.12",
+    "@types/jest": "^29.5.12",
+    "@typescript-eslint/eslint-plugin": "^7.8.0",
+    "@typescript-eslint/parser": "^7.8.0",
     "eslint": "^8.52.0",
-    "eslint-plugin-jest": "^27.4.3",
+    "eslint-plugin-jest": "^28.5.0",
     "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "typescript": "^5.2.2"
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "debug": "^4.3.4"
