@@ -2,11 +2,10 @@ import { EventEmitter } from 'node:events';
 import {
 	AwaitQueue,
 	AwaitQueueStoppedError,
-	AwaitQueueRemovedTaskError
-} from './';
+	AwaitQueueRemovedTaskError,
+} from '../';
 
-test('pushed tasks run sequentially', async () =>
-{
+test('tasks run sequentially', async () => {
 	const awaitQueue = new AwaitQueue();
 	let resultTaskA: string | Error | undefined;
 	let resultTaskB: string | Error | undefined;
@@ -16,20 +15,24 @@ test('pushed tasks run sequentially', async () =>
 	let resultTaskF: string | Error | undefined;
 	const resolvedResults: string[] = [];
 
-	const taskA = async (): Promise<string> =>
-	{
+	const taskA = async (): Promise<string> => {
 		resolvedResults.push('A1');
 		await wait(50);
 		resolvedResults.push('A2');
 
 		// Note that taskB was already removed when taskA started being processed.
-		expectDumpToContain(awaitQueue, [ 'taskA', 'taskC', 'taskD', 'taskE', 'taskF' ]);
+		expectDumpToContain(awaitQueue, [
+			'taskA',
+			'taskC',
+			'taskD',
+			'taskE',
+			'taskF',
+		]);
 
 		return 'taskA';
 	};
 
-	const taskB = async (): Promise<string> =>
-	{
+	const taskB = async (): Promise<string> => {
 		resolvedResults.push('B1');
 		await wait(50);
 		resolvedResults.push('B2');
@@ -37,39 +40,36 @@ test('pushed tasks run sequentially', async () =>
 		return 'taskB';
 	};
 
-	const taskC = (): string =>
-	{
+	const taskC = (): string => {
 		resolvedResults.push('C1');
 		resolvedResults.push('C2');
 
-		expectDumpToContain(awaitQueue, [ 'taskC', 'taskD', 'taskE', 'taskF' ]);
+		expectDumpToContain(awaitQueue, ['taskC', 'taskD', 'taskE', 'taskF']);
 
 		return 'taskC';
 	};
 
-	const taskD = async (): Promise<string> =>
-	{
+	const taskD = async (): Promise<string> => {
 		resolvedResults.push('D1');
 		await wait(50);
 		resolvedResults.push('D2');
 
-		expectDumpToContain(awaitQueue, [ 'taskD', 'taskE', 'taskF' ]);
+		expectDumpToContain(awaitQueue, ['taskD', 'taskE', 'taskF']);
 
 		// Remove taskD so it must reject with AwaitQueueRemovedTaskError.
 		awaitQueue.remove(0);
 
-		expectDumpToContain(awaitQueue, [ 'taskE', 'taskF' ]);
+		expectDumpToContain(awaitQueue, ['taskE', 'taskF']);
 
 		return 'taskD';
 	};
 
-	const taskE = async (): Promise<string> =>
-	{
+	const taskE = async (): Promise<string> => {
 		resolvedResults.push('E1');
 		await wait(50);
 		resolvedResults.push('E2');
 
-		expectDumpToContain(awaitQueue, [ 'taskE', 'taskF' ]);
+		expectDumpToContain(awaitQueue, ['taskE', 'taskF']);
 
 		// Make taskE and taskF reject with AwaitQueueStoppedError.
 		awaitQueue.stop();
@@ -79,8 +79,7 @@ test('pushed tasks run sequentially', async () =>
 		return 'taskD';
 	};
 
-	const taskF = async (): Promise<string> =>
-	{
+	const taskF = async (): Promise<string> => {
 		resolvedResults.push('F1');
 		await wait(50);
 		resolvedResults.push('F2');
@@ -89,39 +88,82 @@ test('pushed tasks run sequentially', async () =>
 	};
 
 	// Create a Promise that will resolve once last taskE completes.
-	const tasksPromise = new Promise<void>((resolve) =>
-	{
-		awaitQueue.push(taskA, 'taskA')
-			.then((result) => { resultTaskA = result; })
-			.catch((error) => { resultTaskA = error; });
+	const tasksPromise: Promise<void> = new Promise(resolve => {
+		awaitQueue
+			.push(taskA, 'taskA')
+			.then(result => {
+				resultTaskA = result;
+			})
+			.catch(error => {
+				resultTaskA = error;
+			});
 
-		awaitQueue.push(taskB, 'taskB')
-			.then((result) => { resultTaskB = result; })
-			.catch((error) => { resultTaskB = error; });
+		awaitQueue
+			.push(taskB, 'taskB')
+			.then(result => {
+				resultTaskB = result;
+			})
+			.catch(error => {
+				resultTaskB = error;
+			});
 
-		awaitQueue.push(taskC, 'taskC')
-			.then((result) => { resultTaskC = result; })
-			.catch((error) => { resultTaskC = error; });
+		awaitQueue
+			.push(taskC, 'taskC')
+			.then(result => {
+				resultTaskC = result;
+			})
+			.catch(error => {
+				resultTaskC = error;
+			});
 
-		awaitQueue.push(taskD, 'taskD')
-			.then((result) => { resultTaskD = result; })
-			.catch((error) => { resultTaskD = error; });
+		awaitQueue
+			.push(taskD, 'taskD')
+			.then(result => {
+				resultTaskD = result;
+			})
+			.catch(error => {
+				resultTaskD = error;
+			});
 
-		awaitQueue.push(taskE, 'taskE')
-			.then((result) => { resultTaskE = result; })
-			.catch((error) => { resultTaskE = error; });
+		awaitQueue
+			.push(taskE, 'taskE')
+			.then(result => {
+				resultTaskE = result;
+			})
+			.catch(error => {
+				resultTaskE = error;
+			});
 
-		awaitQueue.push(taskF, 'taskF')
-			.then((result) => { resultTaskF = result; })
-			.catch((error) => { resultTaskF = error; resolve(); });
+		awaitQueue
+			.push(taskF, 'taskF')
+			.then(result => {
+				resultTaskF = result;
+			})
+			.catch(error => {
+				resultTaskF = error;
+				resolve();
+			});
 	});
 
-	expectDumpToContain(awaitQueue, [ 'taskA', 'taskB', 'taskC', 'taskD', 'taskE', 'taskF' ]);
+	expectDumpToContain(awaitQueue, [
+		'taskA',
+		'taskB',
+		'taskC',
+		'taskD',
+		'taskE',
+		'taskF',
+	]);
 
 	// Remove taskB so it must reject with AwaitQueueRemovedTaskError.
 	awaitQueue.remove(1);
 
-	expectDumpToContain(awaitQueue, [ 'taskA', 'taskC', 'taskD', 'taskE', 'taskF' ]);
+	expectDumpToContain(awaitQueue, [
+		'taskA',
+		'taskC',
+		'taskD',
+		'taskE',
+		'taskF',
+	]);
 
 	// Wait for all tasks to complete.
 	await tasksPromise;
@@ -132,21 +174,27 @@ test('pushed tasks run sequentially', async () =>
 	expect(resultTaskD instanceof AwaitQueueRemovedTaskError).toBe(true);
 	expect(resultTaskE instanceof AwaitQueueStoppedError).toBe(true);
 	expect(resultTaskF instanceof AwaitQueueStoppedError).toBe(true);
-	expect(resolvedResults).toEqual([ 'A1', 'A2', 'C1', 'C2', 'D1', 'D2', 'E1', 'E2' ]);
+	expect(resolvedResults).toEqual([
+		'A1',
+		'A2',
+		'C1',
+		'C2',
+		'D1',
+		'D2',
+		'E1',
+		'E2',
+	]);
 }, 1000);
 
-test('new task does not lead to next task execution if a stopped one is ongoing', async () =>
-{
+test('new task does not lead to next task execution if a stopped one is ongoing', async () => {
 	const awaitQueue = new AwaitQueue();
 	const executionsCount: Map<string, number> = new Map();
 	const emitter = new EventEmitter();
 
-	const taskA = function()
-	{
+	const taskA = function () {
 		const taskName = 'taskA';
 
-		return new Promise((resolve) =>
-		{
+		return new Promise<void>(resolve => {
 			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
@@ -155,12 +203,10 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskB = function()
-	{
+	const taskB = function () {
 		const taskName = 'taskB';
 
-		return new Promise((resolve) =>
-		{
+		return new Promise<void>(resolve => {
 			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
@@ -169,12 +215,10 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskC = function()
-	{
+	const taskC = function () {
 		const taskName = 'taskC';
 
-		return new Promise((resolve) =>
-		{
+		return new Promise<void>(resolve => {
 			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
@@ -183,12 +227,10 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskD = function()
-	{
+	const taskD = function () {
 		const taskName = 'taskD';
 
-		return new Promise((resolve) =>
-		{
+		return new Promise<void>(resolve => {
 			let executionCount = executionsCount.get(taskName) ?? 0;
 
 			executionsCount.set(taskName, ++executionCount);
@@ -199,18 +241,16 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 
 	// Add task A into the AwaitQueue. Ignore the stop error and push task D during
 	// the rejection.
-	awaitQueue.push(taskA, 'taskA')
-		.catch(() => awaitQueue.push(taskD, 'taskD'));
+	awaitQueue.push(taskA, 'taskA').catch(() => awaitQueue.push(taskD, 'taskD'));
 
 	// Add a task B into the AwaitQueue. Ignore stop error.
-	awaitQueue.push(taskB, 'taskB')
-		.catch(() => {});
+	awaitQueue.push(taskB, 'taskB').catch(() => {});
 
 	// Stop the queue. This will make tasks A and B reject and task D will be pushed.
 	awaitQueue.stop();
 
 	// Add a task C into the AwaitQueue.
-	awaitQueue.push(taskC, 'taskC');
+	void awaitQueue.push(taskC, 'taskC');
 
 	// Task A is still running (despite it was stopped), terminate it.
 	emitter.emit('resolve-task-a');
@@ -237,27 +277,25 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 	expect(executionsCount.get('taskD')).toBe(1);
 }, 1000);
 
-async function wait(timeMs: number): Promise<void>
-{
-	await new Promise<void>((resolve) =>
-	{
+async function wait(timeMs: number): Promise<void> {
+	await new Promise<void>(resolve => {
 		setTimeout(resolve, timeMs);
 	});
 }
 
-function expectDumpToContain(awaitQueue: AwaitQueue, taskNames: string[]): void
-{
+function expectDumpToContain(
+	awaitQueue: AwaitQueue,
+	taskNames: string[]
+): void {
 	const dump = awaitQueue.dump();
 
 	expect(awaitQueue.size).toBe(taskNames.length);
 	expect(dump.length).toBe(taskNames.length);
 
-	for (let i = 0; i < taskNames.length; ++i)
-	{
-		expect(dump[i]).toMatchObject(
-			{
-				idx  : i,
-				name : taskNames[i]
-			});
+	for (let i = 0; i < taskNames.length; ++i) {
+		expect(dump[i]).toMatchObject({
+			idx: i,
+			name: taskNames[i],
+		});
 	}
 }

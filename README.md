@@ -2,125 +2,148 @@
 
 [![][npm-shield-awaitqueue]][npm-awaitqueue]
 [![][github-actions-shield-awaitqueue]][github-actions-awaitqueue]
+[![][opencollective-shield-mediasoup]][opencollective-mediasoup]
 
-JavaScript utility to enqueue asynchronous tasks and run them sequentially one after another. For Node.js and the browser.
-
+TypeScript utility to enqueue asynchronous tasks and run them sequentially one after another. For Node.js and the browser.
 
 ## Installation
 
 ```bash
-$ npm install awaitqueue
+npm install awaitqueue
 ```
 
 ## Usage
 
-* In ES6:
+In ES6:
 
 ```js
 import {
-  AwaitQueue,
-  AwaitQueueTask,
-  AwaitQueueTaskDump,
-  AwaitQueueStoppedError,
-  AwaitQueueRemovedTaskError
+	AwaitQueue,
+	AwaitQueueTask,
+	AwaitQueueTaskDump,
+	AwaitQueueStoppedError,
+	AwaitQueueRemovedTaskError,
 } from 'awaitqueue';
 ```
 
-* In CommonJS:
+In CommonJS:
 
 ```js
-const { 
-  AwaitQueue,
-  AwaitQueueTask,
-  AwaitQueueTaskDump,
-  AwaitQueueStoppedError,
-  AwaitQueueRemovedTaskError
+const {
+	AwaitQueue,
+	AwaitQueueTask,
+	AwaitQueueTaskDump,
+	AwaitQueueStoppedError,
+	AwaitQueueRemovedTaskError,
 } = require('awaitqueue');
 ```
 
-
 ## Types
 
-#### `type AwaitQueueTask`
+### `type AwaitQueueTask`
 
-```typescript
-type AwaitQueueTask<T> = () => (T | PromiseLike<T>);
+```ts
+type AwaitQueueTask<T> = () => T | PromiseLike<T>;
 ```
 
 TypeScript type representing a function that returns a value `T` or a Promise that resolves with `T`.
 
-#### `type AwaitQueueTaskDump`
+### `type AwaitQueueTaskDump`
 
-```typescript
-type AwaitQueueTaskDump =
-{
-  idx: number;
-  task: AwaitQueueTask<unknown>;
-  name?: string;
-  enqueuedTime: number;
-  executionTime: number;
+```ts
+type AwaitQueueTaskDump = {
+	idx: number;
+	task: AwaitQueueTask<unknown>;
+	name?: string;
+	enqueuedTime: number;
+	executionTime: number;
 };
 ```
 
 TypeScript type representing an item in the array returned by the `awaitQueue.dump()` method.
 
-* `idx`: Index of the pending task in the queue (0 means the task being processed now).
-* `task`: The function to be executed.
-* `name`: The name of the given `function` (if any) or the `name` argument given to `awaitQueue.push()` method (if any).
-* `enqueuedTime`: Time in milliseconds since the task was enqueued, this is, since `awaitQueue.push()` was called until its execution started or until now if not yet started.
-* `executionTime`: Time in milliseconds since the task execution started (or 0 if not yet started).
-
+- `idx`: Index of the pending task in the queue (0 means the task being processed now).
+- `task`: The function to be executed.
+- `name`: The name of the given `function` (if any) or the `name` argument given to `awaitQueue.push()` method (if any).
+- `enqueuedTime`: Time in milliseconds since the task was enqueued, this is, since `awaitQueue.push()` was called until its execution started or until now if not yet started.
+- `executionTime`: Time in milliseconds since the task execution started (or 0 if not yet started).
 
 ## API
 
-#### `new AwaitQueue()`
+### Class `AwaitQueue`
 
-Creates an `AwaitQueue` instance.
+```ts
+const awaitQueue = new AwaitQueue();
+```
 
-#### `awaitQueue.size: number`
+#### Getter `awaitQueue.size`
 
-Number of enqueued pending tasks.
+```ts
+size: number;
+```
 
-#### `async awaitQueue.push(task: AwaitQueueTask<T>, name?: string): Promise<T>`
+Number of enqueued pending tasks in the queue (including the running one if any).
 
-Accepts a task as argument and enqueues it after pending tasks. Once processed, the `push()` method resolves (or rejects) with the result returned by the given task.
+#### Method `awaitQueue.push()`
 
-* `@param task`: Asynchronous or asynchronous function.
-* `@param name`: Optional task name (useful for `awaitQueue.dump()` method).
+```ts
+async push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T>
+```
 
-#### `awaitQueue.stop(): void`
+Accepts a task as argument and enqueues it after pending tasks. Once processed, the `push()` method resolves (or rejects) with the result (or error) returned by the given task.
 
-Make pending tasks reject with an instance of `AwaitQueueStoppedError`. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
+- `@param task`: Asynchronous or asynchronous function.
+- `@param name`: Optional task name (useful for `awaitQueue.dump()` method).
 
-#### `awaitQueue.remove(taskIdx: number): void`
+#### Method `awaitQueue.stop()`
+
+```ts
+stop(): void
+```
+
+Makes all pending tasks reject with an instance of `AwaitQueueStoppedError`. The `AwaitQueue` instance is still usable for future tasks added via `push()` method.
+
+#### Method `awaitQueue.remove()`
+
+```ts
+remove(taskIdx: number): void
+```
 
 Removes the pending task with given index. The task is rejected with an instance of `AwaitQueueRemovedTaskError`.
 
-* `@param taskIdx`: Index of the pending task to be removed.
+- `@param taskIdx`: Index of the pending task to be removed.
 
-#### `awaitQueue.dump(): AwaitQueueTaskDump[]`
+#### Method `awaitQueue.dump()`
+
+```ts
+dump(): AwaitQueueTaskDump[]
+```
 
 Returns an array with information about pending tasks in the queue. See the `AwaitQueueTaskDump` type above.
 
+### Class `AwaitQueueStoppedError`
 
-## Usage example
+Custom `Error` derived class used to reject pending tasks once `awaitQueue.stop()` method has been called.
 
-See [test.ts](src/test.ts) file.
+### Class `AwaitQueueRemovedTaskError`
 
+Custom `Error` derived class used to reject pending tasks once `awaitQueue.remove()` method has been called.
+
+## Usage examples
+
+See the [unit tests](src/tests/test.ts).
 
 ## Author
 
-* Iñaki Baz Castillo [[website](https://inakibaz.me)|[github](https://github.com/ibc/)]
-
+- Iñaki Baz Castillo [[website](https://inakibaz.me)|[github](https://github.com/ibc/)]
 
 ## License
 
 [ISC](./LICENSE)
 
-
-
-
 [npm-shield-awaitqueue]: https://img.shields.io/npm/v/awaitqueue.svg
 [npm-awaitqueue]: https://npmjs.org/package/awaitqueue
 [github-actions-shield-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml/badge.svg
 [github-actions-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml
+[opencollective-shield-mediasoup]: https://img.shields.io/opencollective/all/mediasoup.svg
+[opencollective-mediasoup]: https://opencollective.com/mediasoup/
