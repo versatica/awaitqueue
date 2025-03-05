@@ -1,6 +1,10 @@
 name: awaitqueue
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
 
 concurrency:
   # Cancel a currently running workflow from the same PR, branch or tag when a
