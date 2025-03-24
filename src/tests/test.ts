@@ -94,7 +94,7 @@ test('tasks run sequentially', async () => {
 			.then(result => {
 				resultTaskA = result;
 			})
-			.catch(error => {
+			.catch((error: Error) => {
 				resultTaskA = error;
 			});
 
@@ -103,7 +103,7 @@ test('tasks run sequentially', async () => {
 			.then(result => {
 				resultTaskB = result;
 			})
-			.catch(error => {
+			.catch((error: Error) => {
 				resultTaskB = error;
 			});
 
@@ -112,7 +112,7 @@ test('tasks run sequentially', async () => {
 			.then(result => {
 				resultTaskC = result;
 			})
-			.catch(error => {
+			.catch((error: Error) => {
 				resultTaskC = error;
 			});
 
@@ -121,7 +121,7 @@ test('tasks run sequentially', async () => {
 			.then(result => {
 				resultTaskD = result;
 			})
-			.catch(error => {
+			.catch((error: Error) => {
 				resultTaskD = error;
 			});
 
@@ -130,7 +130,7 @@ test('tasks run sequentially', async () => {
 			.then(result => {
 				resultTaskE = result;
 			})
-			.catch(error => {
+			.catch((error: Error) => {
 				resultTaskE = error;
 			});
 
@@ -139,7 +139,7 @@ test('tasks run sequentially', async () => {
 			.then(result => {
 				resultTaskF = result;
 			})
-			.catch(error => {
+			.catch((error: Error) => {
 				resultTaskF = error;
 				resolve();
 			});
@@ -191,7 +191,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 	const executionsCount: Map<string, number> = new Map();
 	const emitter = new EventEmitter();
 
-	const taskA = function () {
+	const taskA = function (): Promise<void> {
 		const taskName = 'taskA';
 
 		return new Promise<void>(resolve => {
@@ -203,7 +203,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskB = function () {
+	const taskB = function (): Promise<void> {
 		const taskName = 'taskB';
 
 		return new Promise<void>(resolve => {
@@ -215,7 +215,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskC = function () {
+	const taskC = function (): Promise<void> {
 		const taskName = 'taskC';
 
 		return new Promise<void>(resolve => {
@@ -227,7 +227,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskD = function () {
+	const taskD = function (): Promise<void> {
 		const taskName = 'taskD';
 
 		return new Promise<void>(resolve => {

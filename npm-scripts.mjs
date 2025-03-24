@@ -4,28 +4,37 @@ import { execSync } from 'node:child_process';
 
 const PKG = JSON.parse(fs.readFileSync('./package.json').toString());
 const RELEASE_BRANCH = 'master';
+
 // Paths for ESLint to check. Converted to string for convenience.
-const ESLINT_PATHS = ['eslint.config.mjs', 'src', 'npm-scripts.mjs'].join(' ');
+const ESLINT_PATHS = [
+	'eslint.config.mjs',
+	'jest.config.mjs',
+	'npm-scripts.mjs',
+	'src',
+].join(' ');
 // Paths for ESLint to ignore. Converted to string argument for convenience.
+
 const ESLINT_IGNORE_PATTERN_ARGS = []
 	.map(entry => `--ignore-pattern ${entry}`)
 	.join(' ');
+
 // Paths for Prettier to check/write. Converted to string for convenience.
 // NOTE: Prettier ignores paths in .gitignore so we don't need to care about
 // node/src/fbs.
 const PRETTIER_PATHS = [
 	'README.md',
 	'eslint.config.mjs',
-	'src',
+	'jest.config.mjs',
 	'npm-scripts.mjs',
 	'package.json',
 	'tsconfig.json',
+	'src',
 ].join(' ');
 
 const task = process.argv[2];
 const args = process.argv.slice(3).join(' ');
 
-run();
+void run();
 
 async function run() {
 	logInfo(args ? `[args:"${args}"]` : '');
@@ -34,11 +43,13 @@ async function run() {
 		// As per NPM documentation (https://docs.npmjs.com/cli/v9/using-npm/scripts)
 		// `prepare` script:
 		//
-		// - Runs BEFORE the package is packed, i.e. during `npm publish` and `npm pack`.
+		// - Runs BEFORE the package is packed, i.e. during `npm publish` and
+		//   `npm pack`.
 		// - Runs on local `npm install` without any arguments.
-		// - NOTE: If a package being installed through git contains a `prepare` script,
-		//   its dependencies and devDependencies will be installed, and the `prepare`
-		//   script will be run, before the package is packaged and installed.
+		// - NOTE: If a package being installed through git contains a `prepare`
+		//   script, its dependencies and devDependencies will be installed, and
+		//   the `prepare` script will be run, before the package is packaged and
+		//   installed.
 		//
 		// So here we compile TypeScript to JavaScript.
 		case 'prepare': {
@@ -48,15 +59,13 @@ async function run() {
 		}
 
 		case 'typescript:build': {
-			installDeps();
 			buildTypescript({ force: true });
 
 			break;
 		}
 
 		case 'typescript:watch': {
-			deleteLib();
-			executeCmd(`tsc --watch ${args}`);
+			watchTypescript();
 
 			break;
 		}
@@ -74,14 +83,12 @@ async function run() {
 		}
 
 		case 'test': {
-			buildTypescript({ force: false });
 			test();
 
 			break;
 		}
 
 		case 'coverage': {
-			buildTypescript({ force: false });
 			executeCmd(`jest --coverage ${args}`);
 			executeCmd('open-cli coverage/lcov-report/index.html');
 
@@ -123,7 +130,7 @@ function deleteLib() {
 	fs.rmSync('lib', { recursive: true, force: true });
 }
 
-function buildTypescript({ force = false } = { force: false }) {
+function buildTypescript({ force }) {
 	if (!force && fs.existsSync('lib')) {
 		return;
 	}
@@ -131,7 +138,17 @@ function buildTypescript({ force = false } = { force: false }) {
 	logInfo('buildTypescript()');
 
 	deleteLib();
-	executeCmd('tsc');
+
+	// Generate .js CommonJS code and .d.ts TypeScript declaration files in lib/.
+	executeCmd(`tsc ${args}`);
+}
+
+function watchTypescript() {
+	logInfo('watchTypescript()');
+
+	deleteLib();
+
+	executeCmd(`tsc --watch ${args}`);
 }
 
 function lint() {
@@ -165,6 +182,7 @@ function installDeps() {
 
 	// Install/update deps.
 	executeCmd('npm ci --ignore-scripts');
+
 	// Update package-lock.json.
 	executeCmd('npm install --package-lock-only --ignore-scripts');
 }
@@ -178,19 +196,15 @@ function checkRelease() {
 	test();
 }
 
-function executeCmd(command, exitOnError = true) {
+function executeCmd(command) {
 	logInfo(`executeCmd(): ${command}`);
 
 	try {
 		execSync(command, { stdio: ['ignore', process.stdout, process.stderr] });
 	} catch (error) {
-		if (exitOnError) {
-			logError(`executeCmd() failed, exiting: ${error}`);
+		logError(`executeCmd() failed, exiting: ${error}`);
 
-			exitWithError();
-		} else {
-			logInfo(`executeCmd() failed, ignoring: ${error}`);
-		}
+		exitWithError();
 	}
 }
 
