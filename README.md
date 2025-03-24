@@ -14,9 +14,9 @@ npm install awaitqueue
 
 ## Usage
 
-In ES6:
+In ESM:
 
-```js
+```ts
 import {
 	AwaitQueue,
 	AwaitQueueTask,
@@ -26,9 +26,9 @@ import {
 } from 'awaitqueue';
 ```
 
-In CommonJS:
+Using CommonJS:
 
-```js
+```ts
 const {
 	AwaitQueue,
 	AwaitQueueTask,

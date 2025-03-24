@@ -8,7 +8,7 @@ const config = tsEslint.config(
 	{
 		languageOptions: {
 			sourceType: 'module',
-			globals: { ...globals.browser },
+			globals: { ...globals.node },
 		},
 		linterOptions: {
 			noInlineConfig: false,
@@ -107,18 +107,20 @@ const config = tsEslint.config(
 			yoda: 2,
 		},
 	},
-	// NOTE: We need to apply this only to .ts files (and not to .mjs files).
+	// NOTE: We need to apply this only to .ts source files (and not to .mjs
+	// files).
 	...tsEslint.configs.recommendedTypeChecked.map(item => ({
 		...item,
 		files: ['src/**/*.ts'],
 	})),
-	// NOTE: We need to apply this only to .ts files (and not to .mjs files).
+	// NOTE: We need to apply this only to .ts source files (and not to .mjs
+	// files).
 	...tsEslint.configs.stylisticTypeChecked.map(item => ({
 		...item,
 		files: ['src/**/*.ts'],
 	})),
 	{
-		name: 'mediasoup-client .ts files',
+		name: '.ts source files',
 		files: ['src/**/*.ts'],
 		languageOptions: {
 			parserOptions: {
@@ -143,27 +145,17 @@ const config = tsEslint.config(
 			],
 			// We want to use `type` instead of `interface`.
 			'@typescript-eslint/consistent-type-definitions': 0,
-			// Sorry, we need many `any` usage.
-			'@typescript-eslint/no-explicit-any': 0,
-			'@typescript-eslint/no-unsafe-member-access': 0,
-			'@typescript-eslint/no-unsafe-assignment': 0,
-			'@typescript-eslint/no-unsafe-call': 0,
-			'@typescript-eslint/no-unsafe-return': 0,
-			'@typescript-eslint/no-unsafe-argument': 0,
-			'@typescript-eslint/consistent-indexed-object-style': 0,
-			'@typescript-eslint/no-empty-function': 0,
-			'@typescript-eslint/require-await': 0,
-			'@typescript-eslint/restrict-template-expressions': 0,
-			'@typescript-eslint/no-duplicate-type-constituents': [
+			'@typescript-eslint/explicit-function-return-type': [
 				2,
-				{ ignoreUnions: true },
+				{ allowExpressions: true },
 			],
-			'@typescript-eslint/unbound-method': 0,
-			'@typescript-eslint/prefer-string-starts-ends-with': 0,
+			// Sorry, we need many `any` usage.
+			// '@typescript-eslint/no-explicit-any': 0,
+			'@typescript-eslint/no-empty-function': 0,
 		},
 	},
 	{
-		name: 'mediasoup-client .ts test files',
+		name: '.ts test files',
 		...jestEslint.configs['flat/recommended'],
 		files: ['src/test/**/*.ts'],
 		rules: {
