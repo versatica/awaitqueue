@@ -150,7 +150,7 @@ const config = tsEslint.config(
 				{ allowExpressions: true },
 			],
 			// Sorry, we need many `any` usage.
-			// '@typescript-eslint/no-explicit-any': 0,
+			'@typescript-eslint/no-explicit-any': 0,
 			'@typescript-eslint/no-empty-function': 0,
 		},
 	},
