@@ -1,6 +1,6 @@
 {
 	"name": "awaitqueue",
-	"version": "3.2.4",
+	"version": "3.3.0",
 	"description": "TypeScript utility to enqueue asynchronous tasks and run them sequentially one after another",
 	"author": "Iñaki Baz Castillo <ibc@aliax.net> (https://inakibaz.me)",
 	"license": "ISC",
