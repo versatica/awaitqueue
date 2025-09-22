@@ -19,6 +19,7 @@ In ESM:
 ```ts
 import {
 	AwaitQueue,
+	AwaitQueuePushOptions,
 	AwaitQueueTask,
 	AwaitQueueTaskDump,
 	AwaitQueueStoppedError,
@@ -31,6 +32,7 @@ Using CommonJS:
 ```ts
 const {
 	AwaitQueue,
+	AwaitQueuePushOptions,
 	AwaitQueueTask,
 	AwaitQueueTaskDump,
 	AwaitQueueStoppedError,
@@ -39,6 +41,18 @@ const {
 ```
 
 ## Types
+
+### `type AwaitQueuePushOptions`
+
+```ts
+export type AwaitQueuePushOptions = {
+	removeOngoingTasksWithSameName?: boolean;
+};
+```
+
+Options given to `awaitQueue.push()`.
+
+- `removeOngoingTasksWithSameName`: If `true`, all previously enqueued tasks with same name will be removed and will reject with an instance of `AwaitQueueRemovedTaskError`.
 
 ### `type AwaitQueueTask`
 
@@ -87,13 +101,14 @@ Number of enqueued pending tasks in the queue (including the running one if any)
 #### Method `awaitQueue.push()`
 
 ```ts
-async push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T>
+async push<T>(task: AwaitQueueTask<T>, name?: string, options?: AwaitQueuePushOptions): Promise<T>
 ```
 
 Accepts a task as argument and enqueues it after pending tasks. Once processed, the `push()` method resolves (or rejects) with the result (or error) returned by the given task.
 
 - `@param task`: Asynchronous or asynchronous function.
-- `@param name`: Optional task name (useful for `awaitQueue.dump()` method).
+- `@param name`: Optional task name.
+- `@param.options`: Options.
 
 #### Method `awaitQueue.stop()`
 

@@ -1,5 +1,9 @@
 import { Logger } from './Logger';
-import type { AwaitQueueTask, AwaitQueueTaskDump } from './types';
+import type {
+	AwaitQueuePushOptions,
+	AwaitQueueTask,
+	AwaitQueueTaskDump,
+} from './types';
 import { AwaitQueueStoppedError, AwaitQueueRemovedTaskError } from './errors';
 
 const logger = new Logger('AwaitQueue');
@@ -12,7 +16,10 @@ type PendingTask<T> = {
 	executedAt?: number;
 	completed: boolean;
 	resolve: (result: T | PromiseLike<T>) => void;
-	reject: (error: Error) => void;
+	reject: (
+		error: Error,
+		{ canExecuteNextTask }: { canExecuteNextTask: boolean }
+	) => void;
 };
 
 export class AwaitQueue {
@@ -20,8 +27,6 @@ export class AwaitQueue {
 	private readonly pendingTasks: Map<number, PendingTask<any>> = new Map();
 	// Incrementing PendingTask id.
 	private nextTaskId = 0;
-	// Whether stop() method is stopping all pending tasks.
-	private stopping = false;
 
 	constructor() {
 		logger.debug('constructor()');
@@ -31,10 +36,14 @@ export class AwaitQueue {
 		return this.pendingTasks.size;
 	}
 
-	async push<T>(task: AwaitQueueTask<T>, name?: string): Promise<T> {
+	async push<T>(
+		task: AwaitQueueTask<T>,
+		name?: string,
+		options?: AwaitQueuePushOptions
+	): Promise<T> {
 		name = name ?? task.name;
 
-		logger.debug(`push() [name:${name}]`);
+		logger.debug(`push() [name:${name}, options:%o]`, options);
 
 		if (typeof task !== 'function') {
 			throw new TypeError('given task is not a function');
@@ -47,6 +56,16 @@ export class AwaitQueue {
 		}
 
 		return new Promise<T>((resolve, reject) => {
+			if (name && options?.removeOngoingTasksWithSameName) {
+				for (const pendingTask of this.pendingTasks.values()) {
+					if (pendingTask.name === name) {
+						pendingTask.reject(new AwaitQueueRemovedTaskError(), {
+							canExecuteNextTask: false,
+						});
+					}
+				}
+			}
+
 			const pendingTask: PendingTask<T> = {
 				id: this.nextTaskId++,
 				task: task,
@@ -86,7 +105,10 @@ export class AwaitQueue {
 						void this.execute(nextPendingTask);
 					}
 				},
-				reject: (error: Error) => {
+				reject: (
+					error: Error,
+					{ canExecuteNextTask }: { canExecuteNextTask: boolean }
+				) => {
 					// pendingTask.reject() can be called within execute() method if the
 					// task completed with error. However it may have also been called in
 					// stop() or remove() methods (before or while being executed) so its
@@ -109,8 +131,8 @@ export class AwaitQueue {
 					// Reject the task with the obtained error.
 					reject(error);
 
-					// Execute the next pending task (if any) unless stop() is running.
-					if (!this.stopping) {
+					// May execute next pending task (if any).
+					if (canExecuteNextTask) {
 						const [nextPendingTask] = this.pendingTasks.values();
 
 						// NOTE: During the reject() callback the user app may have interacted
@@ -137,15 +159,13 @@ export class AwaitQueue {
 	stop(): void {
 		logger.debug('stop()');
 
-		this.stopping = true;
-
 		for (const pendingTask of this.pendingTasks.values()) {
 			logger.debug(`stop() | stopping task [name:${pendingTask.name}]`);
 
-			pendingTask.reject(new AwaitQueueStoppedError());
+			pendingTask.reject(new AwaitQueueStoppedError(), {
+				canExecuteNextTask: false,
+			});
 		}
-
-		this.stopping = false;
 	}
 
 	remove(taskIdx: number): void {
@@ -159,7 +179,9 @@ export class AwaitQueue {
 			return;
 		}
 
-		pendingTask.reject(new AwaitQueueRemovedTaskError());
+		pendingTask.reject(new AwaitQueueRemovedTaskError(), {
+			canExecuteNextTask: true,
+		});
 	}
 
 	dump(): AwaitQueueTaskDump[] {
@@ -193,7 +215,7 @@ export class AwaitQueue {
 			pendingTask.resolve(result);
 		} catch (error) {
 			// Reject the task with its rejected error.
-			pendingTask.reject(error as Error);
+			pendingTask.reject(error as Error, { canExecuteNextTask: true });
 		}
 	}
 }

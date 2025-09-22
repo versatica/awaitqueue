@@ -1,3 +1,7 @@
+export type AwaitQueuePushOptions = {
+	removeOngoingTasksWithSameName?: boolean;
+};
+
 export type AwaitQueueTask<T> = () => T | PromiseLike<T>;
 
 export type AwaitQueueTaskDump = {

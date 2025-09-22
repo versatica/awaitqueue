@@ -191,7 +191,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 	const executionsCount: Map<string, number> = new Map();
 	const emitter = new EventEmitter();
 
-	const taskA = function (): Promise<void> {
+	const taskA = async function (): Promise<void> {
 		const taskName = 'taskA';
 
 		return new Promise<void>(resolve => {
@@ -203,7 +203,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskB = function (): Promise<void> {
+	const taskB = async function (): Promise<void> {
 		const taskName = 'taskB';
 
 		return new Promise<void>(resolve => {
@@ -215,7 +215,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskC = function (): Promise<void> {
+	const taskC = async function (): Promise<void> {
 		const taskName = 'taskC';
 
 		return new Promise<void>(resolve => {
@@ -227,7 +227,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		});
 	};
 
-	const taskD = function (): Promise<void> {
+	const taskD = async function (): Promise<void> {
 		const taskName = 'taskD';
 
 		return new Promise<void>(resolve => {
@@ -275,6 +275,54 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 
 	// Task D has resolved.
 	expect(executionsCount.get('taskD')).toBe(1);
+}, 1000);
+
+test('removeOngoingTasksWithSameName option removes ongoing tasks with same name', async () => {
+	const awaitQueue = new AwaitQueue();
+	const emitter = new EventEmitter();
+	let removedTaskACount = 0;
+
+	const taskA = async function (): Promise<void> {
+		return new Promise<void>(resolve => {
+			emitter.on('resolve-task-a', resolve);
+		});
+	};
+
+	const taskB = async function (): Promise<void> {
+		return new Promise<void>(resolve => {
+			emitter.on('resolve-task-b', resolve);
+		});
+	};
+
+	for (let i = 0; i < 10; ++i) {
+		awaitQueue
+			.push(taskA, 'taskA', { removeOngoingTasksWithSameName: false })
+			.catch(error => {
+				if (error instanceof AwaitQueueRemovedTaskError) {
+					++removedTaskACount;
+				}
+			});
+	}
+
+	const lastTaskAPromise = awaitQueue.push(taskA, 'taskA', {
+		removeOngoingTasksWithSameName: true,
+	});
+
+	const taskBPromise = awaitQueue.push(taskB, 'taskB', {
+		removeOngoingTasksWithSameName: true,
+	});
+
+	expectDumpToContain(awaitQueue, ['taskA', 'taskB']);
+
+	emitter.emit('resolve-task-a');
+
+	await lastTaskAPromise;
+
+	emitter.emit('resolve-task-b');
+
+	await taskBPromise;
+
+	expect(removedTaskACount).toBe(10);
 }, 1000);
 
 async function wait(timeMs: number): Promise<void> {
