@@ -279,30 +279,17 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 
 test('removeOngoingTasksWithSameName option removes ongoing tasks with same name', async () => {
 	const awaitQueue = new AwaitQueue();
-	const executionsCount: Map<string, number> = new Map();
 	const emitter = new EventEmitter();
 	let removedTaskACount = 0;
 
 	const taskA = async function (): Promise<void> {
-		const taskName = 'taskA';
-
 		return new Promise<void>(resolve => {
-			let executionCount = executionsCount.get(taskName) ?? 0;
-
-			executionsCount.set(taskName, ++executionCount);
-
 			emitter.on('resolve-task-a', resolve);
 		});
 	};
 
 	const taskB = async function (): Promise<void> {
-		const taskName = 'taskB';
-
 		return new Promise<void>(resolve => {
-			let executionCount = executionsCount.get(taskName) ?? 0;
-
-			executionsCount.set(taskName, ++executionCount);
-
 			emitter.on('resolve-task-b', resolve);
 		});
 	};
