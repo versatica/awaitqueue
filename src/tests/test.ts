@@ -277,7 +277,7 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 	expect(executionsCount.get('taskD')).toBe(1);
 }, 1000);
 
-test('removeOngoingTasksWithSameName option cancels ongoing tasks with same name', async () => {
+test('removeOngoingTasksWithSameName option removes ongoing tasks with same name', async () => {
 	const awaitQueue = new AwaitQueue();
 	const executionsCount: Map<string, number> = new Map();
 	const emitter = new EventEmitter();

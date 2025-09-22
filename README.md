@@ -52,7 +52,7 @@ export type AwaitQueuePushOptions = {
 
 Options given to `awaitQueue.push()`.
 
-- `removeOngoingTasksWithSameName`: If `true`, all previously enqueued tasks with same name will be aborted and will reject with an instance of `AwaitQueueRemovedTaskError`.
+- `removeOngoingTasksWithSameName`: If `true`, all previously enqueued tasks with same name will be removed and will reject with an instance of `AwaitQueueRemovedTaskError`.
 
 ### `type AwaitQueueTask`
 
