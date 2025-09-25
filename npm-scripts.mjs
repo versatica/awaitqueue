@@ -89,8 +89,7 @@ async function run() {
 		}
 
 		case 'coverage': {
-			executeCmd(`jest --coverage ${taskArgs}`);
-			executeCmd('open-cli coverage/lcov-report/index.html');
+			coverage();
 
 			break;
 		}
@@ -170,6 +169,13 @@ function test() {
 	logInfo('test()');
 
 	executeCmd(`jest --silent false --detectOpenHandles ${taskArgs}`);
+}
+
+function coverage() {
+	logInfo('coverage()');
+
+	executeCmd(`jest --coverage ${taskArgs}`);
+	executeCmd('open-cli coverage/lcov-report/index.html');
 }
 
 function installDeps() {
