@@ -158,7 +158,7 @@ See the [unit tests](src/tests/test.ts).
 
 [npm-shield-awaitqueue]: https://img.shields.io/npm/v/awaitqueue.svg
 [npm-awaitqueue]: https://npmjs.org/package/awaitqueue
-[github-actions-shield-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml/badge.svg
-[github-actions-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml
+[github-actions-shield-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml/badge.svg?branch=master
+[github-actions-awaitqueue]: https://github.com/versatica/awaitqueue/actions/workflows/awaitqueue.yaml?query=branch%3Amaster
 [opencollective-shield-mediasoup]: https://img.shields.io/opencollective/all/mediasoup.svg
 [opencollective-mediasoup]: https://opencollective.com/mediasoup/

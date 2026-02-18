@@ -195,9 +195,9 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		const taskName = 'taskA';
 
 		return new Promise<void>(resolve => {
-			let executionCount = executionsCount.get(taskName) ?? 0;
+			const executionCount = executionsCount.get(taskName) ?? 0;
 
-			executionsCount.set(taskName, ++executionCount);
+			executionsCount.set(taskName, executionCount + 1);
 
 			emitter.on('resolve-task-a', resolve);
 		});
@@ -207,9 +207,9 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		const taskName = 'taskB';
 
 		return new Promise<void>(resolve => {
-			let executionCount = executionsCount.get(taskName) ?? 0;
+			const executionCount = executionsCount.get(taskName) ?? 0;
 
-			executionsCount.set(taskName, ++executionCount);
+			executionsCount.set(taskName, executionCount + 1);
 
 			emitter.on('resolve-task-b', resolve);
 		});
@@ -219,9 +219,9 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		const taskName = 'taskC';
 
 		return new Promise<void>(resolve => {
-			let executionCount = executionsCount.get(taskName) ?? 0;
+			const executionCount = executionsCount.get(taskName) ?? 0;
 
-			executionsCount.set(taskName, ++executionCount);
+			executionsCount.set(taskName, executionCount + 1);
 
 			emitter.on('resolve-task-c', resolve);
 		});
@@ -231,9 +231,9 @@ test('new task does not lead to next task execution if a stopped one is ongoing'
 		const taskName = 'taskD';
 
 		return new Promise<void>(resolve => {
-			let executionCount = executionsCount.get(taskName) ?? 0;
+			const executionCount = executionsCount.get(taskName) ?? 0;
 
-			executionsCount.set(taskName, ++executionCount);
+			executionsCount.set(taskName, executionCount + 1);
 
 			emitter.on('resolve-task-d', resolve);
 		});
