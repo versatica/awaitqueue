@@ -18,12 +18,12 @@ In ESM:
 
 ```ts
 import {
-	AwaitQueue,
-	AwaitQueuePushOptions,
-	AwaitQueueTask,
-	AwaitQueueTaskDump,
-	AwaitQueueStoppedError,
-	AwaitQueueRemovedTaskError,
+  AwaitQueue,
+  AwaitQueuePushOptions,
+  AwaitQueueTask,
+  AwaitQueueTaskDump,
+  AwaitQueueStoppedError,
+  AwaitQueueRemovedTaskError,
 } from 'awaitqueue';
 ```
 
@@ -31,12 +31,12 @@ Using CommonJS:
 
 ```ts
 const {
-	AwaitQueue,
-	AwaitQueuePushOptions,
-	AwaitQueueTask,
-	AwaitQueueTaskDump,
-	AwaitQueueStoppedError,
-	AwaitQueueRemovedTaskError,
+  AwaitQueue,
+  AwaitQueuePushOptions,
+  AwaitQueueTask,
+  AwaitQueueTaskDump,
+  AwaitQueueStoppedError,
+  AwaitQueueRemovedTaskError,
 } = require('awaitqueue');
 ```
 
@@ -46,7 +46,7 @@ const {
 
 ```ts
 export type AwaitQueuePushOptions = {
-	removeOngoingTasksWithSameName?: boolean;
+  removeOngoingTasksWithSameName?: boolean;
 };
 ```
 
@@ -66,11 +66,11 @@ TypeScript type representing a function that returns a value `T` or a Promise th
 
 ```ts
 type AwaitQueueTaskDump = {
-	idx: number;
-	task: AwaitQueueTask<unknown>;
-	name?: string;
-	enqueuedTime: number;
-	executionTime: number;
+  idx: number;
+  task: AwaitQueueTask<unknown>;
+  name?: string;
+  enqueuedTime: number;
+  executionTime: number;
 };
 ```
 
